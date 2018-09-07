@@ -186,7 +186,7 @@ public class GencodeFuncotation implements Funcotation {
         //TODO See issue https://github.com/broadinstitute/gatk/issues/4797
 
         // After the manual string, we check to see if we have an override first and if not we get the set field value:
-        final List<String> funcotations = Arrays.asList((hugoSymbolSerializedOverride != null ? hugoSymbolSerializedOverride : (hugoSymbol != null ? hugoSymbol : "")),
+        final List<String> funcotations = Arrays.asList((hugoSymbolSerializedOverride != null ? hugoSymbolSerializedOverride : (hugoSymbol != null ? hugoSymbol : "Unknown")),
                 (ncbiBuildSerializedOverride != null ? ncbiBuildSerializedOverride : (ncbiBuild != null ? ncbiBuild : "")),
                 (chromosomeSerializedOverride != null ? chromosomeSerializedOverride : (chromosome != null ? chromosome : "")),
                 (startSerializedOverride != null ? startSerializedOverride : String.valueOf(start)),
@@ -876,10 +876,21 @@ public class GencodeFuncotation implements Funcotation {
         /** Deletion that overlaps the start codon. */
         START_CODON_DEL("START_CODON_DEL", 3),
 
-        // These can only be in 5' UTRs:
-        /** New start codon is created by the given variant using the chosen transcript. However, it is in frame relative to the coded protein. */
+        /** New start codon is created by the given variant using the chosen transcript.
+         * However, it is in frame relative to the coded protein, meaning that if the coding sequence were extended
+         * (either before the start codon or after the stop codon) then the new start codon would be in frame with the
+         * existing start and stop codons.
+         *
+         * This can only occur in a 5' UTR.
+         */
         DE_NOVO_START_IN_FRAME("DE_NOVO_START_IN_FRAME", 1),
-        /** New start codon is created by the given variant using the chosen transcript. However, it is out of frame relative to the coded protein. */
+        /** New start codon is created by the given variant using the chosen transcript.
+         * However, it is out of frame relative to the coded protein, meaning that if the coding sequence were extended
+         * (either before the start codon or after the stop codon) then the new start codon would NOT be in frame with
+         * the existing start and stop codons.
+         *
+         * This can only occur in a 5' UTR.
+         */
         DE_NOVO_START_OUT_FRAME("DE_NOVO_START_OUT_FRAME", 0),
 
         // These are special / catch-all cases:

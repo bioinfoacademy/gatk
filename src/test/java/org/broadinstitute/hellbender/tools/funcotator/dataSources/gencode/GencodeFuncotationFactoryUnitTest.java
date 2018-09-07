@@ -174,7 +174,7 @@ public class GencodeFuncotationFactoryUnitTest extends GATKBaseTest {
             final Integer locusLevel,
             final GencodeFuncotation.VariantClassification variantClassification,
             final Integer transcriptLength
-            ) {
+    ) {
 
         final GencodeFuncotationBuilder builder = new GencodeFuncotationBuilder();
 
@@ -206,6 +206,112 @@ public class GencodeFuncotationFactoryUnitTest extends GATKBaseTest {
                 new SimpleInterval( contigName, refStartPos, refEndPos )
         );
     }
+
+    private GencodeGtfFeatureBaseData createGtfBaseDataForTestIs5Prime(final SimpleInterval interval) {
+        return new GencodeGtfFeatureBaseData(
+                1,
+                interval.getContig(),
+                GencodeGtfFeature.AnnotationSource.ENSEMBL,
+                GencodeGtfFeature.FeatureType.GENE,
+                interval.getStart(),
+                interval.getEnd(),
+                Strand.POSITIVE,
+                GencodeGtfFeature.GenomicPhase.DOT,
+                "TEST-GENE-ID",
+                "TEST-TX-ID",
+                GencodeGtfFeature.GeneTranscriptType.PROTEIN_CODING,
+                GencodeGtfFeature.GeneTranscriptStatus.PUTATIVE,
+                "TEST-GENE",
+                GencodeGtfFeature.GeneTranscriptType.PROTEIN_CODING,
+                GencodeGtfFeature.GeneTranscriptStatus.PUTATIVE,
+                "TEST-TX",
+                1,
+                "",
+                GencodeGtfFeature.LocusLevel.AUTOMATICALLY_ANNOTATED,
+                null,
+                "");
+    }
+
+    private GencodeGtfExonFeature helpCreateExonFeature(final SimpleInterval interval,
+                                                        final GencodeGtfStartCodonFeature startCodonFeature) {
+
+        final GencodeGtfFeatureBaseData baseData = createGtfBaseDataForTestIs5Prime(interval);
+        baseData.featureType = GencodeGtfFeature.FeatureType.EXON;
+        final GencodeGtfExonFeature exon = (GencodeGtfExonFeature)GencodeGtfExonFeature.create(baseData);
+
+        if ( startCodonFeature != null ) {
+            exon.setStartCodon(startCodonFeature);
+        }
+
+        return exon;
+    }
+
+    private GencodeGtfTranscriptFeature provideForTestIs5PrimeUtrTranscriptHelper(
+                                            final SimpleInterval interval,
+                                            final Strand strand,
+                                            final GencodeGtfStartCodonFeature startCodonFeature) {
+        //    All that is needed for the Transcript is:
+        //      Strand
+        //      Exons
+        //          start codon within an exon
+
+        final GencodeGtfFeatureBaseData baseData = createGtfBaseDataForTestIs5Prime(interval);
+        baseData.featureType = GencodeGtfFeature.FeatureType.TRANSCRIPT;
+        baseData.genomicStrand = strand;
+
+        final GencodeGtfTranscriptFeature transcriptFeature = (GencodeGtfTranscriptFeature) GencodeGtfTranscriptFeature.create(baseData);
+
+        if ( startCodonFeature == null ) {
+            // Always create a list of 3 exons:
+            final int NUM_EXONS = 3;
+
+            final int step = (interval.getEnd()-interval.getStart())/NUM_EXONS;
+            for (int i = interval.getStart() ; i < interval.getEnd() ; i += step ) {
+                transcriptFeature.addExon(
+                        helpCreateExonFeature(new SimpleInterval(interval.getContig(), i, i+step-1), null)
+                );
+            }
+        }
+        else {
+            // Create 2 exons - 1 to contain the start codon, the other to be a placeholder:
+            final int NUM_EXONS = 2;
+
+            boolean firstExon = true;
+            final int step = (interval.getEnd()-interval.getStart())/NUM_EXONS;
+            for (int i = interval.getStart() ; i < interval.getEnd() ; i += step ) {
+                GencodeGtfStartCodonFeature startCodonLoopFeature = null;
+                if (firstExon) {
+                    startCodonLoopFeature = startCodonFeature;
+                    firstExon = false;
+                }
+
+                transcriptFeature.addExon(
+                        helpCreateExonFeature(new SimpleInterval(interval.getContig(), i, i+step-1), startCodonLoopFeature)
+                );
+            }
+        }
+
+        return transcriptFeature;
+    }
+
+    private GencodeGtfUTRFeature provideForTestIs5PrimeUtrUTRHelper(final SimpleInterval interval) {
+        //    All that is needed for the UTR is:
+        //      start
+        //      end
+        final GencodeGtfFeatureBaseData baseData = createGtfBaseDataForTestIs5Prime(interval);
+        baseData.featureType = GencodeGtfFeature.FeatureType.UTR;
+        return (GencodeGtfUTRFeature) GencodeGtfUTRFeature.create(baseData);
+    }
+
+    private GencodeGtfStartCodonFeature provideForTestIs5PrimeUtrStartCodonHelper(final SimpleInterval interval) {
+        //    All that is needed for the StartCodon is:
+        //      start
+        //      end
+        final GencodeGtfFeatureBaseData baseData = createGtfBaseDataForTestIs5Prime(interval);
+        baseData.featureType = GencodeGtfFeature.FeatureType.START_CODON;
+        return (GencodeGtfStartCodonFeature)GencodeGtfStartCodonFeature.create(baseData);
+    }
+
 
     //==================================================================================================================
     // Data Providers:
@@ -395,6 +501,78 @@ public class GencodeFuncotationFactoryUnitTest extends GATKBaseTest {
         outList.addAll( addReferenceDataToUnitTestData(DataProviderForPik3caTestData.providePik3caInDelData2(), FuncotatorReferenceTestUtils.retrieveHg19Chr3Ref(), pik3caFeatureReader, refDataSourceHg19Ch3, FuncotatorTestConstants.PIK3CA_GENCODE_TRANSCRIPT_FASTA_FILE, FuncotatorTestConstants.PIK3CA_GENCODE_ANNOTATIONS_FILE_NAME ) );
 
         return outList.toArray(new Object[][]{{}});
+    }
+
+    @DataProvider
+    Object[][] provideForTestCreateGencodeFuncotationBuilderWithTrivialFieldsPopulated() {
+
+        //Line 1229 or so
+
+        // Just simple field checks are OK.
+        // Doesn't need to be fancy.
+
+//        final VariantContext variant,
+//        final Allele altAllele,
+//        final GencodeGtfGeneFeature gtfFeature,
+//        final GencodeGtfTranscriptFeature transcript
+
+        final SimpleInterval variantInterval =  new SimpleInterval("chr3", 178921515, 178921517);
+        final Allele refAllele = Allele.create("GCA", true);
+        final Allele altAllele = Allele.create("TTG");
+        final VariantContext variant = new VariantContextBuilder(
+                    FuncotatorReferenceTestUtils.retrieveHg19Chr3Ref(),
+                    variantInterval.getContig(),
+                    variantInterval.getStart(),
+                    variantInterval.getEnd(),
+                    Arrays.asList(refAllele, altAllele)
+                ).make();
+
+
+        final GencodeGtfGeneFeature gene = DataProviderForExampleGencodeGtfGene.createGencodeGtfGeneFeature();
+
+        return new Object[][] {
+                { variant, altAllele, gene, gene.getTranscripts().get(0) }
+        };
+    }
+
+    @DataProvider
+    Object[][] provideForTestIs5PrimeUtr() {
+
+        // Need:
+        //    Transcript:
+        //      Strand
+        //      Exons
+        //          start codon within an exon
+        //
+        //    StartCodon:
+        //      start
+        //      end
+        //
+        //    UTR:
+        //      start
+        //      end
+
+        final SimpleInterval transcriptInterval = new SimpleInterval("T", 1, 2000);
+
+        final GencodeGtfStartCodonFeature startCodonFeatureFront = provideForTestIs5PrimeUtrStartCodonHelper(new SimpleInterval("T", 500, 502));
+        final GencodeGtfStartCodonFeature startCodonFeatureBack = provideForTestIs5PrimeUtrStartCodonHelper(new SimpleInterval("T", 1498, 1500));
+
+        final GencodeGtfUTRFeature utr = provideForTestIs5PrimeUtrUTRHelper(new SimpleInterval("T", 750, 1250));
+
+        return new Object[][] {
+                // Strand +
+                    // Start Codon is Null
+                { utr, provideForTestIs5PrimeUtrTranscriptHelper(transcriptInterval, Strand.POSITIVE, null), false },
+                    // Start Codon non-null
+                { utr, provideForTestIs5PrimeUtrTranscriptHelper(transcriptInterval, Strand.POSITIVE, startCodonFeatureFront), false },
+                { utr, provideForTestIs5PrimeUtrTranscriptHelper(transcriptInterval, Strand.POSITIVE, startCodonFeatureBack), true },
+                // Strand -
+                    // Start Codon is Null
+                { utr, provideForTestIs5PrimeUtrTranscriptHelper(transcriptInterval, Strand.NEGATIVE, null), false },
+                    // Start Codon non-null
+                { utr, provideForTestIs5PrimeUtrTranscriptHelper(transcriptInterval, Strand.NEGATIVE, startCodonFeatureFront), true },
+                { utr, provideForTestIs5PrimeUtrTranscriptHelper(transcriptInterval, Strand.NEGATIVE, startCodonFeatureBack), false },
+        };
     }
 
     @DataProvider
@@ -1239,7 +1417,7 @@ public class GencodeFuncotationFactoryUnitTest extends GATKBaseTest {
     }
 
     @Test (dataProvider = "provideDataForCreateFuncotations")
-    void testCreateFuncotations(final String expectedGeneName,
+    public void testCreateFuncotations(final String expectedGeneName,
                                 final int chromosomeNumber,
                                 final int start,
                                 final int end,
@@ -1394,6 +1572,43 @@ public class GencodeFuncotationFactoryUnitTest extends GATKBaseTest {
             Assert.assertEquals(symmetricDifference.size(), 0, "Metadata fields did not match exactly the funcotation field names: " +
                 symmetricDifference.stream().collect(Collectors.joining(", ")));
         }
+    }
+
+    @Test(dataProvider = "provideForTestCreateGencodeFuncotationBuilderWithTrivialFieldsPopulated")
+    void testCreateGencodeFuncotationBuilderWithTrivialFieldsPopulated(final VariantContext variant,
+                                                                       final Allele altAllele,
+                                                                       final GencodeGtfGeneFeature gtfFeature,
+                                                                       final GencodeGtfTranscriptFeature transcript ) {
+
+        final GencodeFuncotationBuilder builder =
+                GencodeFuncotationFactory.createGencodeFuncotationBuilderWithTrivialFieldsPopulated(variant, altAllele,
+                        gtfFeature, transcript);
+        final GencodeFuncotation gf = builder.gencodeFuncotation;
+
+        // Ultra-trivial checks:
+        Assert.assertEquals( gf.getRefAllele(), variant.getReference().getBaseString() );
+        Assert.assertEquals( gf.getTranscriptStrand(), transcript.getGenomicStrand().encode() );
+        Assert.assertEquals( gf.getHugoSymbol(), gtfFeature.getGeneName() );
+        Assert.assertEquals( gf.getNcbiBuild(), gtfFeature.getUcscGenomeVersion() );
+        Assert.assertEquals( gf.getChromosome(), gtfFeature.getChromosomeName() );
+        Assert.assertEquals( gf.getStart(), variant.getStart() );
+        Assert.assertEquals( gf.getGeneTranscriptType(), transcript.getTranscriptType() );
+        Assert.assertEquals( gf.getEnd(), variant.getStart() + altAllele.length() - 1 );
+        Assert.assertEquals( gf.getTumorSeqAllele2(), altAllele.getBaseString() );
+        Assert.assertEquals( gf.getAnnotationTranscript(), transcript.getTranscriptId() );
+        Assert.assertEquals( gf.getLocusLevel(), Integer.valueOf(transcript.getLocusLevel().toString()) );
+
+        // Still simple, but computational, checks:
+        Assert.assertEquals( gf.getVariantType(), GencodeFuncotationFactory.getVariantType(variant.getReference(), altAllele));
+        Assert.assertEquals( gf.getGenomeChange(), GencodeFuncotationFactory.getGenomeChangeString(variant, altAllele, gtfFeature) );
+        Assert.assertTrue( gf.getTranscriptPos() == FuncotatorUtils.getTranscriptAlleleStartPosition(variant, transcript.getExons(), transcript.getGenomicStrand()) );
+        Assert.assertEquals( gf.getApprisRank(), GencodeFuncotationFactory.getApprisRank( transcript ) );
+        Assert.assertTrue( gf.getTranscriptLength() == transcript.getExons().stream().mapToInt(Locatable::getLengthOnReference).sum() );
+    }
+
+    @Test(dataProvider = "provideForTestIs5PrimeUtr")
+    void testIs5PrimeUtr(final GencodeGtfUTRFeature utr, final GencodeGtfTranscriptFeature transcript, final boolean expected) {
+        Assert.assertEquals(GencodeFuncotationFactory.is5PrimeUtr( utr, transcript), expected);
     }
 
     @Test (dataProvider = "provideDataForTestIsVariantInCodingRegion")

@@ -1606,4 +1606,100 @@ public class GencodeFuncotationFactoryUnitTest extends GATKBaseTest {
     private static FeatureInput<? extends Feature> createFeatureInputForCntn4Ds(final String dsName) {
         return new FeatureInput<>(CNTN4_GENCODE_ANNOTATIONS_FILE_NAME, dsName, Collections.emptyMap());
     }
+
+
+
+    @DataProvider
+    public Object[][] provideDataForCreateFuncotationsWithFlanks() {
+        return new Object[][] {
+                // 1 base before the 5' end, 5' flank size = 3000
+                { "MUC16", GencodeFuncotation.VariantClassification.FIVE_PRIME_FLANK, 19, 9092019, 9092019, "C", "A", 3000, 0, FuncotatorReferenceTestUtils.retrieveHg19Chr19Ref(), muc16FeatureReader, refDataSourceHg19Ch19, FuncotatorTestConstants.MUC16_GENCODE_TRANSCRIPT_FASTA_FILE, FuncotatorTestConstants.MUC16_GENCODE_ANNOTATIONS_FILE_NAME },
+                // 10 bases before the 5' end, 5' flank size = 10
+                { "MUC16", GencodeFuncotation.VariantClassification.FIVE_PRIME_FLANK, 19, 9092028, 9092028, "A", "T", 10, 0, FuncotatorReferenceTestUtils.retrieveHg19Chr19Ref(), muc16FeatureReader, refDataSourceHg19Ch19, FuncotatorTestConstants.MUC16_GENCODE_TRANSCRIPT_FASTA_FILE, FuncotatorTestConstants.MUC16_GENCODE_ANNOTATIONS_FILE_NAME },
+
+                // 10 bases before the 5' end, 5' flank size = 9
+                //{ "MUC16", GencodeFuncotation.VariantClassification.FIVE_PRIME_FLANK, 19, 9092028, 9092028, "C", "A", 9, 0, FuncotatorReferenceTestUtils.retrieveHg19Chr19Ref(), muc16FeatureReader, refDataSourceHg19Ch19, FuncotatorTestConstants.MUC16_GENCODE_TRANSCRIPT_FASTA_FILE, FuncotatorTestConstants.MUC16_GENCODE_ANNOTATIONS_FILE_NAME }
+
+                // 1 base after the 3' end, 3' flank size = 100
+                { "MUC16", GencodeFuncotation.VariantClassification.THREE_PRIME_FLANK, 19, 8959519, 8959519, "G", "A", 0, 100, FuncotatorReferenceTestUtils.retrieveHg19Chr19Ref(), muc16FeatureReader, refDataSourceHg19Ch19, FuncotatorTestConstants.MUC16_GENCODE_TRANSCRIPT_FASTA_FILE, FuncotatorTestConstants.MUC16_GENCODE_ANNOTATIONS_FILE_NAME },
+                // 10 bases after the 3' end, 3' flank size = 10
+                { "MUC16", GencodeFuncotation.VariantClassification.THREE_PRIME_FLANK, 19, 8959510, 8959510, "A", "T", 0, 10, FuncotatorReferenceTestUtils.retrieveHg19Chr19Ref(), muc16FeatureReader, refDataSourceHg19Ch19, FuncotatorTestConstants.MUC16_GENCODE_TRANSCRIPT_FASTA_FILE, FuncotatorTestConstants.MUC16_GENCODE_ANNOTATIONS_FILE_NAME }
+
+        };
+    }
+
+    @Test(dataProvider = "provideDataForCreateFuncotationsWithFlanks")
+    void testCreateFuncotationsWithFlanks(final String expectedGeneName,
+                                          final GencodeFuncotation.VariantClassification expectedVariantClassification,
+                                final int chromosomeNumber,
+                                final int start,
+                                final int end,
+                                final String ref,
+                                final String alt,
+                                final int fivePrimeFlankSize,
+                                final int threePrimeFlankSize,
+                                final String referenceFileName,
+                                final FeatureReader<GencodeGtfFeature> featureReader,
+                                final ReferenceDataSource referenceDataSource,
+                                final String transcriptFastaFile,
+                                final String transcriptGtfFile) {
+
+        final int queryPadding = Math.max(fivePrimeFlankSize, threePrimeFlankSize);
+
+        final String contig = "chr" + Integer.toString(chromosomeNumber);
+        final SimpleInterval variantInterval = new SimpleInterval( contig, start, end );
+
+        final Allele refAllele = Allele.create(ref, true);
+        final Allele altAllele = Allele.create(alt);
+
+        final VariantContextBuilder variantContextBuilder = new VariantContextBuilder(
+                referenceFileName,
+                contig,
+                start,
+                end,
+                Arrays.asList(refAllele, altAllele)
+        );
+        final VariantContext variantContext = variantContextBuilder.make();
+
+        // Get our gene feature iterator:
+        final CloseableTribbleIterator<GencodeGtfFeature> gtfFeatureIterator;
+        try {
+            gtfFeatureIterator = featureReader.query(contig, Math.max(start - queryPadding, 1), end + queryPadding);
+        }
+        catch (final IOException ex) {
+            throw new GATKException("Could not finish the test!", ex);
+        }
+
+        // Get the gene.
+        // We know the first gene is the right one - the gene in question is the MUC16 gene:
+        final GencodeGtfGeneFeature gene = (GencodeGtfGeneFeature) gtfFeatureIterator.next();
+        final ReferenceContext referenceContext = new ReferenceContext(referenceDataSource, variantInterval);
+
+        // TODO: Make this an input argument:
+        final Set<String> requestedTranscriptIds = getValidTranscriptsForGene(expectedGeneName);
+
+        // Create a factory for our funcotations:
+        try (final GencodeFuncotationFactory funcotationFactory = new GencodeFuncotationFactory(
+                IOUtils.getPath(transcriptFastaFile),
+                "VERSION",
+                GencodeFuncotationFactory.DEFAULT_NAME,
+                FuncotatorArgumentDefinitions.TRANSCRIPT_SELECTION_MODE_DEFAULT_VALUE,
+                requestedTranscriptIds,
+                new LinkedHashMap<>(),
+                new FeatureInput<>(transcriptGtfFile, GencodeFuncotationFactory.DEFAULT_NAME, Collections.emptyMap()),
+                fivePrimeFlankSize, threePrimeFlankSize)) {
+
+            final List<Feature> featureList = new ArrayList<>();
+            featureList.add(gene);
+            final List<Funcotation> funcotations = funcotationFactory.createFuncotationsOnVariant(variantContext, referenceContext, featureList);
+
+            // Make sure we get what we expected:
+            Assert.assertEquals(funcotations.size(), 1);
+
+            final GencodeFuncotation funcotation = (GencodeFuncotation)funcotations.get(0);
+
+            Assert.assertEquals(funcotation.getHugoSymbol(), expectedGeneName, "Gene name not correct");
+            Assert.assertEquals(funcotation.getVariantClassification(), expectedVariantClassification, "Variant classification not correct");
+        }
+    }
 }

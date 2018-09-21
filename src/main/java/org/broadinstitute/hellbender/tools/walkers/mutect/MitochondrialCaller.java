@@ -96,7 +96,7 @@ public class MitochondrialCaller extends AssemblyRegionWalker {
     public List<Class<? extends Annotation>> getDefaultVariantAnnotationGroups() {
         List<Class<? extends Annotation>> annotations = new ArrayList<>(Mutect2Engine.getStandardMutect2AnnotationGroups());
         annotations.add(StandardMitochondrialAnnotation.class);
-        return new ArrayList<>(annotations);
+        return annotations;
     }
 
     @Override
@@ -109,13 +109,13 @@ public class MitochondrialCaller extends AssemblyRegionWalker {
 
     @Override
     public void onTraversalStart() {
-        Set<String> samples =  ReadUtils.getSamplesFromHeader(getHeaderForReads());
+        final Set<String> samples =  ReadUtils.getSamplesFromHeader(getHeaderForReads());
         if (samples.size() != 1 ){
             throw new UserException(String.format("The input bam has more than one sample: %s", Arrays.toString(samples.toArray())));
         }
-        String sampleName = samples.iterator().next();
-        M2ArgumentCollection m2Args =  new M2ArgumentCollection(MTAC, sampleName);
-        VariantAnnotatorEngine annotatorEngine = new VariantAnnotatorEngine(makeVariantAnnotations(), null, Collections.emptyList(), false);
+        final String sampleName = samples.iterator().next();
+        final M2ArgumentCollection m2Args =  new M2ArgumentCollection(MTAC, sampleName);
+        final VariantAnnotatorEngine annotatorEngine = new VariantAnnotatorEngine(makeVariantAnnotations(), null, Collections.emptyList(), false);
         m2Engine = new Mutect2Engine(m2Args, createOutputBamIndex, createOutputBamMD5, getHeaderForReads(), referenceArguments.getReferenceFileName(), annotatorEngine, GATKVCFConstants.LOD_KEY);
         vcfWriter = createVCFWriter(outputVCF);
         m2Engine.writeHeader(vcfWriter, getMitochondrialCallerVCFHeaderLines());
@@ -152,7 +152,7 @@ public class MitochondrialCaller extends AssemblyRegionWalker {
 
     private Set<VCFHeaderLine> getMitochondrialCallerVCFHeaderLines() {
         final Set<VCFHeaderLine> headerInfo = new HashSet<>();
-        headerInfo.add(new VCFHeaderLine("Mutect Version", m2Engine.getVersion()));
+        headerInfo.add(new VCFHeaderLine("MutectVersion", m2Engine.getVersion()));
         headerInfo.add(new VCFHeaderLine(Mutect2FilteringEngine.FILTERING_STATUS_VCF_KEY, "Warning: unfiltered Mutect 2 calls.  Please run " + FilterMitochondrialCalls.class.getSimpleName() + " to remove false positives."));
         headerInfo.addAll(m2Engine.getAnnotationEngine().getVCFAnnotationDescriptions(false));
         headerInfo.addAll(getDefaultToolVCFHeaderLines());

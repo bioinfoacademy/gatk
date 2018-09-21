@@ -272,7 +272,7 @@ public final class ReadFilterLibrary {
         private static final long serialVersionUID = 1L;
         @Override public boolean test(final GATKRead read) {
             boolean accept = true;
-            if (read.hasAttribute(AddOriginalAlignmentTags.OA_TAG_NAME) & read.hasAttribute(AddOriginalAlignmentTags.MATE_CONTIG_TAG_NAME)) {
+            if (read.hasAttribute(AddOriginalAlignmentTags.OA_TAG_NAME) && read.hasAttribute(AddOriginalAlignmentTags.MATE_CONTIG_TAG_NAME)) {
                 accept = AddOriginalAlignmentTags.getOAContig(read).equals(read.getAttributeAsString(AddOriginalAlignmentTags.MATE_CONTIG_TAG_NAME));
             }
             return accept;

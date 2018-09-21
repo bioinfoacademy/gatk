@@ -55,7 +55,7 @@ public class OriginalAlignment extends GenotypeAnnotation implements StandardMit
 
         long nonChrMAlt = bestAlleles.stream()
                 .filter(ba -> ba.read.hasAttribute(AddOriginalAlignmentTags.OA_TAG_NAME) && ba.isInformative() && ba.allele.equals(altAlelle) &&
-                        AddOriginalAlignmentTags.getOAContig(ba.read).equals(currentContig))
+                        !AddOriginalAlignmentTags.getOAContig(ba.read).equals(currentContig))
                 .count();
         gb.attribute(GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY, nonChrMAlt);
     }

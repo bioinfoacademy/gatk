@@ -47,18 +47,12 @@ public class AddOriginalAlignmentTags extends ReadWalker {
         }
     }
 
-    private static void addMateContigTag(GATKRead read) {
-        String tagValue;
-        if(!read.mateIsUnmapped()) {
-            tagValue = read.getMateContig();
-        } else {
-            tagValue = "*";
-        }
-        read.setAttribute(MATE_CONTIG_TAG_NAME, tagValue);
+    private static void addMateContigTag(final GATKRead read) {
+        read.setAttribute(MATE_CONTIG_TAG_NAME, !read.mateIsUnmapped() ? read.getMateContig() : "*");
     }
 
     //TODO: Once the OA tag is merged into the spec (https://github.com/samtools/hts-specs/pull/193) this should be moved to htsjdk
-    private static void addOATag(GATKRead read) {
+    private static void addOATag(final GATKRead read) {
         String OAValue;
         if(!read.isUnmapped()){
             OAValue = String.format("%s,%s,%s,%s,%s,%s;",
@@ -75,7 +69,7 @@ public class AddOriginalAlignmentTags extends ReadWalker {
         read.setAttribute(OA_TAG_NAME, OAValue);
     }
 
-    public static String getOAContig (GATKRead read) {
+    public static String getOAContig (final GATKRead read) {
         return(read.getAttributeAsString(OA_TAG_NAME).split(OA_SEPARATOR)[0]);
     }
 

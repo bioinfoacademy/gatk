@@ -23,7 +23,7 @@ public class Mutect2FilteringEngine {
     private M2FiltersArgumentCollection MTFAC;
     private final double contamination;
     private final double somaticPriorProb;
-    private final String tumorSample;
+    protected final String tumorSample;
     private final Optional<String> normalSample;
     private final String lodKey;
     final OverlapDetector<MinorAlleleFractionRecord> tumorSegments;
@@ -109,7 +109,7 @@ public class Mutect2FilteringEngine {
         }
     }
 
-    private void applyBaseQualityFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
+    protected void applyBaseQualityFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
         final int[] baseQualityByAllele = getIntArrayTumorField(vc, BaseQuality.KEY);
         final double[] tumorLods = getDoubleArrayAttribute(vc, lodKey);
         final int indexOfMaxTumorLod = MathUtils.maxElementIndex(tumorLods);
@@ -119,7 +119,7 @@ public class Mutect2FilteringEngine {
         }
     }
 
-    private void applyMappingQualityFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
+    protected void applyMappingQualityFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
         final int[] mappingQualityByAllele = getIntArrayTumorField(vc, MappingQuality.KEY);
         if (mappingQualityByAllele != null && mappingQualityByAllele[0] < MTFAC.minMedianMappingQuality) {
             filterResult.addFilter(GATKVCFConstants.MEDIAN_MAPPING_QUALITY_FILTER_NAME);
@@ -189,7 +189,7 @@ public class Mutect2FilteringEngine {
         }
     }
 
-    private void applyInsufficientEvidenceFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
+    protected void applyInsufficientEvidenceFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
         if (vc.hasAttribute(lodKey)) {
             final double[] tumorLods = getDoubleArrayAttribute(vc, lodKey);
 
@@ -255,7 +255,7 @@ public class Mutect2FilteringEngine {
         return GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, attribute, () -> null, -1);
     }
 
-    private void applyStrandArtifactFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
+    protected void applyStrandArtifactFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
         Genotype tumorGenotype = vc.getGenotype(tumorSample);
         final double[] posteriorProbabilities = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(
                 tumorGenotype, (GATKVCFConstants.STRAND_ARTIFACT_POSTERIOR_KEY), () -> null, -1);
@@ -287,7 +287,7 @@ public class Mutect2FilteringEngine {
 
     // This filter checks for the case in which PCR-duplicates with unique UMIs (which we assume is caused by false adapter priming)
     // amplify the erroneous signal for an alternate allele.
-    private void applyDuplicatedAltReadFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
+    protected void applyDuplicatedAltReadFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
         final Genotype tumorGenotype = vc.getGenotype(tumorSample);
 
         if (!tumorGenotype.hasExtendedAttribute(UniqueAltReadCount.UNIQUE_ALT_READ_SET_COUNT_KEY)) {
@@ -333,33 +333,6 @@ public class Mutect2FilteringEngine {
         }
     }
 
-    private void applyChimericOriginalAlignmentFilter(final MitochondrialFiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
-        final Genotype tumorGenotype = vc.getGenotype(tumorSample);
-        final double[] alleleFractions = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(tumorGenotype, VCFConstants.ALLELE_FREQUENCY_KEY,
-                () -> new double[] {1.0}, 1.0);
-        final int maxFractionIndex = MathUtils.maxElementIndex(alleleFractions);
-        final int[] ADs = tumorGenotype.getAD();
-        final int altCount = ADs[maxFractionIndex + 1];
-
-        if (tumorGenotype.hasAnyAttribute(GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY) & vc.isBiallelic()) {
-            int nonMtOa = Integer.parseInt(tumorGenotype.getAnyAttribute(GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY).toString());
-            if ((double) nonMtOa / altCount > MTFAC.nonMtAltByAlt) {
-                filterResult.addFilter(GATKVCFConstants.CHIMERIC_ORIGINAL_ALIGNMENT_FILTER_NAME);
-            }
-        }
-    }
-
-    private void applyLODFilter(final MitochondrialFiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
-        if(vc.isBiallelic()) {
-            Double LOD = vc.getAttributeAsDouble(GATKVCFConstants.LOD_KEY, 1);
-            Double depth = vc.getAttributeAsDouble(VCFConstants.DEPTH_KEY, 1);
-            Double lodByDepth = LOD / depth;
-            if (lodByDepth < MTFAC.lodByDepth) {
-                filterResult.addFilter(GATKVCFConstants.LOW_AVG_ALT_QUALITY_FILTER_NAME);
-            }
-        }
-    }
-
 
     public FilterResult calculateFilters(final M2FiltersArgumentCollection MTFAC, final VariantContext vc,
                                          final Optional<FilteringFirstPass> firstPass) {
@@ -383,20 +356,6 @@ public class Mutect2FilteringEngine {
 
         // The following filters use the information gathered during the first pass
         applyReadOrientationFilter(vc, filterResult, firstPass);
-        return filterResult;
-    }
-
-    public FilterResult calculateMitochondrialFilters(MitochondrialFiltersArgumentCollection MTFAC, VariantContext vc) {
-        final FilterResult filterResult = new FilterResult();
-
-        applyInsufficientEvidenceFilter(MTFAC, vc, filterResult);
-        applyDuplicatedAltReadFilter(MTFAC, vc, filterResult);
-        applyStrandArtifactFilter(MTFAC, vc, filterResult);
-        applyBaseQualityFilter(MTFAC, vc, filterResult);
-        applyMappingQualityFilter(MTFAC, vc, filterResult);
-
-        applyChimericOriginalAlignmentFilter(MTFAC, vc, filterResult);
-        applyLODFilter(MTFAC, vc, filterResult);
         return filterResult;
     }
 

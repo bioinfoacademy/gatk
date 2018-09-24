@@ -48,6 +48,4 @@ public class MitochondrialCallerIntegrationTest extends CommandLineProgramTest {
         Assert.assertEquals(variants.get(0).getGenotype("NA12878").getAnyAttribute(GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY), "1556");
         Assert.assertEquals(variants.get(0).getGenotype("NA12878").getAnyAttribute(GATKVCFConstants.POTENTIAL_POLYMORPHIC_NUMT_KEY), "true");
     }
-
-    //TODO: add test for annotations (OriginalAlignment and PolymorphicNuMT)
 }

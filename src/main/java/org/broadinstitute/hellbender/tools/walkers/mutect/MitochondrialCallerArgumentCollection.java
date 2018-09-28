@@ -44,10 +44,6 @@ public class MitochondrialCallerArgumentCollection extends AssemblyBasedCallerAr
     @Argument(fullName= M2ArgumentCollection.IGNORE_ITR_ARTIFACTS_LONG_NAME, doc="Turn on read transformer that clips artifacts associated with end repair insertions near inverted tandem repeats.", optional = true)
     public boolean dontClipITRArtifacts = true;
 
-    @Advanced
-    @Argument(fullName = M2ArgumentCollection.GET_AF_FROM_AD_LONG_NAME, doc="Use allelic depth to calculate allele fraction", optional = true)
-    public boolean calculateAFfromAD = true;
-
     /**
      * Used to model autosomal coverage when calling mitochondria. The median tends to be a more robust center statistic.
      */

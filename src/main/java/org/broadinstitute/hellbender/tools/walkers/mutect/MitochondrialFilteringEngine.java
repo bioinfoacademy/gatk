@@ -9,8 +9,8 @@ import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 
 import java.util.Optional;
 
-public class MitochondiralFilteringEngine extends Mutect2FilteringEngine {
-    public MitochondiralFilteringEngine(MitochondrialFiltersArgumentCollection MTFAC, String tumorSample, Optional<String> normalSample, String lodKeyToUse) {
+public class MitochondrialFilteringEngine extends Mutect2FilteringEngine {
+    public MitochondrialFilteringEngine(MitochondrialFiltersArgumentCollection MTFAC, String tumorSample, Optional<String> normalSample, String lodKeyToUse) {
         super(MTFAC, tumorSample, normalSample, lodKeyToUse);
     }
 

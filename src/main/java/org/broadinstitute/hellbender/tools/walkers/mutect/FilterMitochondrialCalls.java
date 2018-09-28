@@ -19,7 +19,6 @@ import org.broadinstitute.hellbender.engine.ReferenceContext;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
-import javax.swing.text.html.Option;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -54,7 +53,7 @@ public final class FilterMitochondrialCalls extends VariantWalker {
 
     private VariantContextWriter vcfWriter;
 
-    private MitochondiralFilteringEngine filteringEngine;
+    private MitochondrialFilteringEngine filteringEngine;
 
     @Override
     public void onTraversalStart() {
@@ -78,7 +77,7 @@ public final class FilterMitochondrialCalls extends VariantWalker {
         }
 
         final String sampleName = allSampleNames.get(0);
-        filteringEngine = new MitochondiralFilteringEngine(MTFAC, sampleName, Optional.empty(), GATKVCFConstants.LOD_KEY);
+        filteringEngine = new MitochondrialFilteringEngine(MTFAC, sampleName, Optional.empty(), GATKVCFConstants.LOD_KEY);
     }
 
     @Override

@@ -68,7 +68,7 @@ public class Mutect2FilteringEngine {
 
     private void applyTriallelicFilter(final VariantContext vc, final FilterResult filterResult) {
         if (vc.hasAttribute(lodKey)) {
-            final double[] tumorLods = getDoubleArrayAttribute(vc, lodKey);
+            final double[] tumorLods = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, lodKey);
             final long numPassingAltAlleles = Arrays.stream(tumorLods).filter(x -> x > MTFAC.TUMOR_LOD_THRESHOLD).count();
 
             if (numPassingAltAlleles > MTFAC.numAltAllelesThreshold) {
@@ -111,7 +111,7 @@ public class Mutect2FilteringEngine {
 
     protected void applyBaseQualityFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
         final int[] baseQualityByAllele = getIntArrayTumorField(vc, BaseQuality.KEY);
-        final double[] tumorLods = getDoubleArrayAttribute(vc, lodKey);
+        final double[] tumorLods = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, lodKey);
         final int indexOfMaxTumorLod = MathUtils.maxElementIndex(tumorLods);
 
         if (baseQualityByAllele != null && baseQualityByAllele[indexOfMaxTumorLod + 1] < MTFAC.minMedianBaseQuality) {
@@ -144,10 +144,10 @@ public class Mutect2FilteringEngine {
 
     private void applyGermlineVariantFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
         if (vc.hasAttribute(GATKVCFConstants.TUMOR_LOD_KEY) && vc.hasAttribute(GATKVCFConstants.POPULATION_AF_VCF_ATTRIBUTE)) {
-            final double[] tumorLog10OddsIfSomatic = getDoubleArrayAttribute(vc, GATKVCFConstants.TUMOR_LOD_KEY);
+            final double[] tumorLog10OddsIfSomatic = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, GATKVCFConstants.TUMOR_LOD_KEY);
             final Optional<double[]> normalLods = vc.hasAttribute(GATKVCFConstants.NORMAL_LOD_KEY) ?
-                    Optional.of(getDoubleArrayAttribute(vc, GATKVCFConstants.NORMAL_LOD_KEY)) : Optional.empty();
-            final double[] populationAlleleFrequencies = getDoubleArrayAttribute(vc, GATKVCFConstants.POPULATION_AF_VCF_ATTRIBUTE);
+                    Optional.of(GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, GATKVCFConstants.NORMAL_LOD_KEY)) : Optional.empty();
+            final double[] populationAlleleFrequencies = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, GATKVCFConstants.POPULATION_AF_VCF_ATTRIBUTE);
 
             final List<MinorAlleleFractionRecord> segments = tumorSegments.getOverlaps(vc).stream().collect(Collectors.toList());
 
@@ -191,7 +191,7 @@ public class Mutect2FilteringEngine {
 
     protected void applyInsufficientEvidenceFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {
         if (vc.hasAttribute(lodKey)) {
-            final double[] tumorLods = getDoubleArrayAttribute(vc, lodKey);
+            final double[] tumorLods = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, lodKey);
 
             if (MathUtils.arrayMax(tumorLods) < MTFAC.TUMOR_LOD_THRESHOLD) {
                 if(lodKey.equals(GATKVCFConstants.TUMOR_LOD_KEY)) {
@@ -211,7 +211,7 @@ public class Mutect2FilteringEngine {
             return;
         }
 
-        final double[] tumorLods = getDoubleArrayAttribute(vc, GATKVCFConstants.TUMOR_LOD_KEY);
+        final double[] tumorLods = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, GATKVCFConstants.TUMOR_LOD_KEY);
         final int indexOfMaxTumorLod = MathUtils.maxElementIndex(tumorLods);
 
         Genotype tumorGenotype = vc.getGenotype(tumorSample);
@@ -232,7 +232,7 @@ public class Mutect2FilteringEngine {
             return;
         }
 
-        final double[] normalArtifactLods = getDoubleArrayAttribute(vc, GATKVCFConstants.NORMAL_ARTIFACT_LOD_ATTRIBUTE);
+        final double[] normalArtifactLods = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, GATKVCFConstants.NORMAL_ARTIFACT_LOD_ATTRIBUTE);
         if (normalArtifactLods[indexOfMaxTumorLod] > MTFAC.NORMAL_ARTIFACT_LOD_THRESHOLD) {
             filterResult.addFilter(GATKVCFConstants.ARTIFACT_IN_NORMAL_FILTER_NAME);
             return;
@@ -249,10 +249,6 @@ public class Mutect2FilteringEngine {
         if (normalPValue < M2FiltersArgumentCollection.normalPileupPValueThreshold) {
             filterResult.addFilter(GATKVCFConstants.ARTIFACT_IN_NORMAL_FILTER_NAME);
         }
-    }
-
-    private static double[] getDoubleArrayAttribute(final VariantContext vc, final String attribute) {
-        return GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, attribute, () -> null, -1);
     }
 
     protected void applyStrandArtifactFilter(final M2FiltersArgumentCollection MTFAC, final VariantContext vc, final FilterResult filterResult) {

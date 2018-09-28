@@ -26,7 +26,7 @@ import java.util.List;
  * <p>If reads were realigned to multiple references (for example the full human reference followed by just the
  * mitochondria) and the original alignment tag was recorded before realigning, then we can count the number of alt
  * reads that have been realigned from other contigs to this one. This can be useful for downstream filtering if an alt
- * allele has all of most of its support originally from a different contig. In the mitochondria case this can be useful
+ * allele has all or most of its support originally from a different contig. In the mitochondria case this can be useful
  * for filtering known NuMTs that are present in other contigs in the reference.  </p>
  *
  * <h3>Caveat</h3>
@@ -36,6 +36,7 @@ import java.util.List;
 @DocumentedFeature(groupName= HelpConstants.DOC_CAT_ANNOTATORS, groupSummary=HelpConstants.DOC_CAT_ANNOTATORS_SUMMARY, summary="Number of alt reads with an OA tag that doesn't match the current alignment contig.")
 public class OriginalAlignment extends GenotypeAnnotation implements StandardMitochondrialAnnotation {
     protected final OneShotLogger warning = new OneShotLogger(this.getClass());
+    public static final String KEY = GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY;
 
     @Override
     public void annotate(ReferenceContext ref, VariantContext vc, Genotype g, GenotypeBuilder gb, ReadLikelihoods<Allele> likelihoods) {
@@ -43,7 +44,7 @@ public class OriginalAlignment extends GenotypeAnnotation implements StandardMit
         Utils.nonNull(vc);
         Utils.nonNull(likelihoods);
 
-        final double[] lods = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, GATKVCFConstants.LOD_KEY, () -> null, -1);
+        final double[] lods = GATKProtectedVariantContextUtils.getAttributeAsDoubleArray(vc, GATKVCFConstants.LOD_KEY);
         if (lods==null) {
             warning.warn(String.format("One or more variant contexts is missing the 'LOD' annotation, %s will not be computed for these VariantContexts", GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY));
             return;
@@ -62,11 +63,11 @@ public class OriginalAlignment extends GenotypeAnnotation implements StandardMit
 
     @Override
     public List<VCFFormatHeaderLine> getDescriptions() {
-        return Collections.singletonList(GATKVCFHeaderLines.getFormatLine(getKeyNames().get(0)));
+        return Collections.singletonList(GATKVCFHeaderLines.getFormatLine(KEY));
     }
 
     @Override
     public List<String> getKeyNames() {
-        return Arrays.asList(GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY);
+        return Collections.singletonList(KEY);
     }
 }

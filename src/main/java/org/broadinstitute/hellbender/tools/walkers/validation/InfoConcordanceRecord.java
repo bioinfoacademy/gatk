@@ -2,7 +2,6 @@ package org.broadinstitute.hellbender.tools.walkers.validation;
 
 import htsjdk.variant.variantcontext.VariantContext;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -25,10 +24,10 @@ public class InfoConcordanceRecord {
     private static final String[] INFO_CONCORDANCE_COLUMN_HEADER =
             {VARIANT_TYPE_COLUMN_NAME, EVAL_INFO_KEY, TRUE_INFO_KEY, MEAN_DIFFERENCE, STD_DIFFERENCE};
     final VariantContext.Type type;
-    final String evalKey;
-    final String trueKey;
-    final double mean;
-    final double std;
+    private final String evalKey;
+    private final String trueKey;
+    private final double mean;
+    private final double std;
 
     public InfoConcordanceRecord(VariantContext.Type type, String evalKey, String trueKey, double mean, double std) {
         this.type = type;

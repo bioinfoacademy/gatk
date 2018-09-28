@@ -29,6 +29,15 @@ public class InfoConcordanceRecord {
     private final double mean;
     private final double std;
 
+    /**
+     * Record keeps track of concordance between values from INFO-field keys of a VCF.
+     *
+     * @param type SNP or INDEL
+     * @param evalKey The INFO field key from the eval VCF
+     * @param trueKey The INFO field key from the truth VCF
+     * @param mean The mean of the differences in values for these INFO fields.
+     * @param std The standard deviation of the differences in values for these INFO fields.
+     */
     public InfoConcordanceRecord(VariantContext.Type type, String evalKey, String trueKey, double mean, double std) {
         this.type = type;
         this.evalKey = evalKey;

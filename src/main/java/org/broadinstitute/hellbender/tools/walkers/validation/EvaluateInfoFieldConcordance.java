@@ -30,7 +30,6 @@ import picard.cmdline.programgroups.VariantEvaluationProgramGroup;
  *
  * <pre>
  * gatk EvaluateInfoFieldConcordance \
- *  -R ref.fasta \
  *  -eval a.vcf \
  *  -truth another.vcf \
  *  -S summary.txt \
@@ -39,11 +38,10 @@ import picard.cmdline.programgroups.VariantEvaluationProgramGroup;
  *  -epsilon 0.01
  * </pre>
  *
- * <h3>Compare the CNN_2D info field with the CNN_1D field from the same sites in one VCFs:</h3>
+ * <h3>Compare the CNN_2D info field with the CNN_1D field from the same sites in one VCF:</h3>
  *
  * <pre>
  * gatk EvaluateInfoFieldConcordance \
- *  -R ref.fasta \
  *  -eval my.vcf \
  *  -truth my.vcf \
  *  -S summary.txt \

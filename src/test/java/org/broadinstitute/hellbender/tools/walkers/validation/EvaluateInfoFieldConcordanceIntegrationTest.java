@@ -2,7 +2,6 @@ package org.broadinstitute.hellbender.tools.walkers.validation;
 
 import htsjdk.variant.variantcontext.VariantContext;
 import org.broadinstitute.hellbender.CommandLineProgramTest;
-import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.engine.AbstractConcordanceWalker;
 import org.broadinstitute.hellbender.testutils.ArgumentsBuilder;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;

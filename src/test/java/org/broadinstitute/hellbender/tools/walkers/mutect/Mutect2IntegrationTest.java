@@ -536,7 +536,7 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
         final File filteredVcf = createTempFile("filtered", ".vcf");
 
         new Main().instanceMain(makeCommandLineArgs(Arrays.asList("-V", NA12878_MITO_VCF.getPath(),
-                "-O", filteredVcf.getPath(), "--mitochondria-mode"), FilterMutectCalls.class.getSimpleName()));
+                "-O", filteredVcf.getPath(), "--" + M2ArgumentCollection.MITOCHONDIRA_MODE_LONG_NAME), FilterMutectCalls.class.getSimpleName()));
 
         final List<VariantContext> variants = VariantContextTestUtils.streamVcf(filteredVcf).collect(Collectors.toList());
         final Iterator<Set<String>> expected = EXPECTED_FILTERS.iterator();

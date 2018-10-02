@@ -91,7 +91,7 @@ import java.util.*;
  *   -weights path/to/my_weights.hd5
  * </pre>
  */
-@BetaFeature
+@ExperimentalFeature
 @DocumentedFeature
 @CommandLineProgramProperties(
         summary = CNNScoreVariants.USAGE_SUMMARY,

@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -526,11 +527,6 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
         Assert.assertEquals(variants.get(0).getGenotype("NA12878").getAnyAttribute(GATKVCFConstants.POTENTIAL_POLYMORPHIC_NUMT_KEY), "true");
     }
 
-    private static final List<Set<String>> EXPECTED_FILTERS = new ArrayList<>(Arrays.<Set<String>>asList(Collections.EMPTY_SET,
-            new HashSet<>(Arrays.asList(GATKVCFConstants.CHIMERIC_ORIGINAL_ALIGNMENT_FILTER_NAME)),
-            new HashSet<>(Arrays.asList(GATKVCFConstants.LOW_LOD_FILTER_NAME, GATKVCFConstants.LOW_AVG_ALT_QUALITY_FILTER_NAME)),
-            Collections.EMPTY_SET, Collections.EMPTY_SET, Collections.EMPTY_SET));
-
     @Test
     public void testFilterMitochondria() throws Exception {
         final File filteredVcf = createTempFile("filtered", ".vcf");
@@ -539,10 +535,16 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
                 "-O", filteredVcf.getPath(), "--" + M2ArgumentCollection.MITOCHONDIRA_MODE_LONG_NAME), FilterMutectCalls.class.getSimpleName()));
 
         final List<VariantContext> variants = VariantContextTestUtils.streamVcf(filteredVcf).collect(Collectors.toList());
-        final Iterator<Set<String>> expected = EXPECTED_FILTERS.iterator();
+        final Iterator<String> expectedFilters = Arrays.asList(
+                "[]",
+                "[chimeric_original_alignment]",
+                "[low_lod, low_avg_alt_quality]",
+                "[]",
+                "[]",
+                "[]").iterator();
 
         for(VariantContext v : variants){
-            assertEqualsSet(v.getFilters(), expected.next(), "filters don't match expected");
+            Assert.assertEquals(v.getFilters().toString(), expectedFilters.next(), "filters don't match expected");
         }
     }
 

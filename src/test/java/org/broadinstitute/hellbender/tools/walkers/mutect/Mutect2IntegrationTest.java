@@ -13,8 +13,6 @@ import org.broadinstitute.hellbender.Main;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.engine.FeatureDataSource;
 import org.broadinstitute.hellbender.tools.exome.orientationbiasvariantfilter.OrientationBiasUtils;
-import org.broadinstitute.hellbender.tools.walkers.annotator.OriginalAlignment;
-import org.broadinstitute.hellbender.tools.walkers.annotator.PolymorphicNuMT;
 import org.broadinstitute.hellbender.tools.walkers.haplotypecaller.AssemblyBasedCallerArgumentCollection;
 import org.broadinstitute.hellbender.tools.walkers.validation.ConcordanceSummaryRecord;
 import org.broadinstitute.hellbender.utils.MathUtils;
@@ -51,6 +49,7 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
     private static final File TEN_PCT_CONTAMINATION_TABLE = new File(toolsTestDir, "mutect/ten-pct-contamination.table");
 
     private static final File NA12878_MITO_BAM = new File(toolsTestDir, "mutect/mito/NA12878.bam");
+    private static final File NA12878_MITO_VCF = new File(toolsTestDir, "mutect/mito/unfiltered.vcf");
     private static final File MITO_REF = new File(toolsTestDir, "mutect/mito/Homo_sapiens_assembly38.mt_only.fasta");
     private static final File DEEP_MITO_BAM = new File(largeFileTestDir, "mutect/highDPMTsnippet.bam");
     private static final String DEEP_MITO_SAMPLE_NAME = "mixture";
@@ -504,7 +503,9 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
                 "-" + M2ArgumentCollection.TUMOR_SAMPLE_SHORT_NAME, "NA12878",
                 "-R", MITO_REF.getAbsolutePath(),
                 "-L", "chrM:1-1000",
+                "--" + M2ArgumentCollection.MEDIAN_AUTOSOMAL_COVERAGE_LONG_NAME, "1556", //arbitrary "autosomal" mean coverage used only for testing
                 "-min-pruning", "5",
+                "--" + M2ArgumentCollection.MITOCHONDIRA_MODE_LONG_NAME,
                 "-O", unfilteredVcf.getAbsolutePath());
         runCommandLine(args);
 
@@ -520,6 +521,29 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
                 "chrM:310-310 [T*, TC]",
                 "chrM:750-750 [A*, G]");
         Assert.assertTrue(expectedKeys.stream().allMatch(variantKeys::contains));
+
+        Assert.assertEquals(variants.get(0).getGenotype("NA12878").getAnyAttribute(GATKVCFConstants.ORIGINAL_CONTIG_MISMATCH_KEY), "1556");
+        Assert.assertEquals(variants.get(0).getGenotype("NA12878").getAnyAttribute(GATKVCFConstants.POTENTIAL_POLYMORPHIC_NUMT_KEY), "true");
+    }
+
+    private static final List<Set<String>> EXPECTED_FILTERS = new ArrayList<>(Arrays.<Set<String>>asList(Collections.EMPTY_SET,
+            new HashSet<>(Arrays.asList(GATKVCFConstants.CHIMERIC_ORIGINAL_ALIGNMENT_FILTER_NAME)),
+            new HashSet<>(Arrays.asList(GATKVCFConstants.LOW_LOD_FILTER_NAME, GATKVCFConstants.LOW_AVG_ALT_QUALITY_FILTER_NAME)),
+            Collections.EMPTY_SET, Collections.EMPTY_SET, Collections.EMPTY_SET));
+
+    @Test
+    public void testFilterMitochondria() throws Exception {
+        final File filteredVcf = createTempFile("filtered", ".vcf");
+
+        new Main().instanceMain(makeCommandLineArgs(Arrays.asList("-V", NA12878_MITO_VCF.getPath(),
+                "-O", filteredVcf.getPath(), "--mitochondria-mode"), FilterMutectCalls.class.getSimpleName()));
+
+        final List<VariantContext> variants = VariantContextTestUtils.streamVcf(filteredVcf).collect(Collectors.toList());
+        final Iterator<Set<String>> expected = EXPECTED_FILTERS.iterator();
+
+        for(VariantContext v : variants){
+            assertEqualsSet(v.getFilters(), expected.next(), "filters don't match expected");
+        }
     }
 
    @Test

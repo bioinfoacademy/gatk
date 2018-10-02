@@ -1,7 +1,6 @@
 package org.broadinstitute.hellbender.tools.walkers.mutect;
 
 import htsjdk.variant.variantcontext.writer.VariantContextWriter;
-import htsjdk.variant.vcf.VCFHeaderLine;
 import org.broadinstitute.barclay.argparser.Argument;
 import org.broadinstitute.barclay.argparser.ArgumentCollection;
 import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
@@ -14,8 +13,7 @@ import org.broadinstitute.hellbender.tools.walkers.annotator.*;
 import org.broadinstitute.hellbender.transformers.ReadTransformer;
 import org.broadinstitute.hellbender.utils.downsampling.MutectDownsampler;
 import org.broadinstitute.hellbender.utils.downsampling.ReadsDownsampler;
-import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
-import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
+import org.broadinstitute.hellbender.utils.read.ReadUtils;
 
 import java.io.File;
 import java.util.*;
@@ -184,11 +182,25 @@ public final class Mutect2 extends AssemblyRegionWalker {
     public AssemblyRegionEvaluator assemblyRegionEvaluator() { return m2Engine; }
 
     @Override
+    protected String[] customCommandLineValidation() {
+        if (MTAC.tumorSample == null && MTAC.mitochondria) {
+            final Set<String> samples = ReadUtils.getSamplesFromHeader(getHeaderForReads());
+            if (samples.size() != 1 ){
+                return new String[]{String.format("The input bam has more than one sample: %s", Arrays.toString(samples.toArray()))};
+            }
+            MTAC.tumorSample = samples.iterator().next();
+        } else if (MTAC.tumorSample == null) {
+            return new String[]{"Argument tumor-sample was missing: Argument 'tumor-sample' is required when not in mitochondria mode."};
+        }
+        return null;
+    }
+
+    @Override
     public void onTraversalStart() {
         VariantAnnotatorEngine annotatorEngine = new VariantAnnotatorEngine(makeVariantAnnotations(), null, Collections.emptyList(), false);
-        m2Engine = new Mutect2Engine(MTAC, createOutputBamIndex, createOutputBamMD5, getHeaderForReads(), referenceArguments.getReferenceFileName(), annotatorEngine, GATKVCFConstants.TUMOR_LOD_KEY);
+        m2Engine = new Mutect2Engine(MTAC, createOutputBamIndex, createOutputBamMD5, getHeaderForReads(), referenceArguments.getReferenceFileName(), annotatorEngine);
         vcfWriter = createVCFWriter(outputVCF);
-        m2Engine.writeHeader(vcfWriter, getMutect2VCFHeaderLines());
+        m2Engine.writeHeader(vcfWriter, getDefaultToolVCFHeaderLines());
     }
 
     @Override
@@ -199,6 +211,9 @@ public final class Mutect2 extends AssemblyRegionWalker {
             // Enable the annotations associated with the read orientation model
             annotations.add(new ReadOrientationArtifact(MTAC.artifactPriorTable));
             annotations.add(new ReferenceBases());
+        }
+        if (MTAC.autosomalCoverage > 0) {
+            annotations.add(new PolymorphicNuMT(MTAC.autosomalCoverage));
         }
         return annotations;
     }
@@ -221,20 +236,5 @@ public final class Mutect2 extends AssemblyRegionWalker {
         if (m2Engine != null) {
             m2Engine.shutdown();
         }
-    }
-
-    private Set<VCFHeaderLine> getMutect2VCFHeaderLines() {
-        final Set<VCFHeaderLine> headerInfo = new HashSet<>();
-        headerInfo.add(new VCFHeaderLine("Mutect Version", m2Engine.getVersion()));
-        headerInfo.add(new VCFHeaderLine(Mutect2FilteringEngine.FILTERING_STATUS_VCF_KEY, "Warning: unfiltered Mutect 2 calls.  Please run " + FilterMutectCalls.class.getSimpleName() + " to remove false positives."));
-        headerInfo.addAll(m2Engine.getAnnotationEngine().getVCFAnnotationDescriptions(false));
-        headerInfo.addAll(getDefaultToolVCFHeaderLines());
-        GATKVCFConstants.STANDARD_MUTECT_INFO_FIELDS.stream().map(GATKVCFHeaderLines::getInfoLine).forEach(headerInfo::add);
-
-        headerInfo.add(new VCFHeaderLine(Mutect2Engine.TUMOR_SAMPLE_KEY_IN_VCF_HEADER, m2Engine.getTumorSample()));
-        if (m2Engine.hasNormal()) {
-            headerInfo.add(new VCFHeaderLine(Mutect2Engine.NORMAL_SAMPLE_KEY_IN_VCF_HEADER, m2Engine.getNormalSample()));
-        }
-        return headerInfo;
     }
 }

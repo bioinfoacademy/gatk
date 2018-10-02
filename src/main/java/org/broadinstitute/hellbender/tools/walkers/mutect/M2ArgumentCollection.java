@@ -37,27 +37,24 @@ public class M2ArgumentCollection extends AssemblyBasedCallerArgumentCollection 
     public static final String IGNORE_ITR_ARTIFACTS_LONG_NAME = "ignore-itr-artifacts";
     public static final String ARTIFACT_PRIOR_TABLE_NAME = "orientation-bias-artifact-priors";
     public static final String GET_AF_FROM_AD_LONG_NAME = "get-af-from-ad";
+    public static final String MEDIAN_AUTOSOMAL_COVERAGE_LONG_NAME = "median-autosomal-coverage";
+    public static final String MITOCHONDIRA_MODE_LONG_NAME = "mitochondria-mode";
 
     public static final double DEFAULT_AF_FOR_TUMOR_ONLY_CALLING = 5e-8;
     public static final double DEFAULT_AF_FOR_TUMOR_NORMAL_CALLING = 1e-6;
+    public static final double DEFAULT_EMISSION_LOD = 3.0;
+    public static final double DEFAULT_MITO_EMISSION_LOD = 0;
+    public static final double DEFAULT_INITIAL_LOD = 2.0;
+    public static final double DEFAULT_MITO_INITIAL_LOD = 0;
 
     public M2ArgumentCollection(){}
-
-    public M2ArgumentCollection(MitochondrialCallerArgumentCollection mitoArgs, String sampleName) {
-        super(mitoArgs);
-        tumorSample = sampleName;
-        emissionLod = mitoArgs.emissionLod;
-        initialTumorLod = mitoArgs.initialLod;
-        maxMnpDistance = mitoArgs.maxMnpDistance;
-        calculateAFfromAD = mitoArgs.calculateAFfromAD;
-    }
 
     //TODO: HACK ALERT HACK ALERT HACK ALERT
     //TODO: GATK4 does not yet have a way to tag inputs, eg -I:tumor tumor.bam -I:normal normal.bam,
     //TODO: so for now we require the user to specify bams *both* as inputs, with -I tumor.bam -I normal.bam
     //TODO: *and* as sample names e.g. -tumor <tumor sample> -normal <normal sample>
 
-    @Argument(fullName = TUMOR_SAMPLE_LONG_NAME, shortName = TUMOR_SAMPLE_SHORT_NAME, doc = "BAM sample name of tumor.  May be URL-encoded as output by GetSampleName with -encode argument.", optional = false)
+    @Argument(fullName = TUMOR_SAMPLE_LONG_NAME, shortName = TUMOR_SAMPLE_SHORT_NAME, doc = "BAM sample name of tumor.  May be URL-encoded as output by GetSampleName with -encode argument.", optional = true)
     protected String tumorSample = null;
 
     @Argument(fullName = NORMAL_SAMPLE_LONG_NAME, shortName = NORMAL_SAMPLE_SHORT_NAME, doc = "BAM sample name of normal.  May be URL-encoded as output by GetSampleName with -encode argument.", optional = true)
@@ -101,12 +98,20 @@ public class M2ArgumentCollection extends AssemblyBasedCallerArgumentCollection 
     @Argument(fullName= DEFAULT_AF_LONG_NAME, shortName = DEFAULT_AF_SHORT_NAME,
             doc="Population allele fraction assigned to alleles not found in germline resource.  Please see docs/mutect/mutect2.pdf for" +
                     "a derivation of the default value.", optional = true)
-    public double afOfAllelesNotInGermlineResource = -1;
+    private double afOfAllelesNotInGermlineResource = -1;
 
     public double getDefaultAlleleFrequency() {
         return afOfAllelesNotInGermlineResource >= 0 ? afOfAllelesNotInGermlineResource :
                 (normalSample == null ? DEFAULT_AF_FOR_TUMOR_ONLY_CALLING : DEFAULT_AF_FOR_TUMOR_NORMAL_CALLING);
     }
+
+    /**
+     * Mitochondria mode changes default values for Emission Lod and Initial Lod to 0 to increase sensitivity. Tumor
+     * sample is also not explicitly required in mitochondria mode since a single sample bam is expected as input.
+     * Mitochondria mode is also recommended in FilterMutectCalls if used here.
+     */
+    @Argument(fullName = MITOCHONDIRA_MODE_LONG_NAME, optional = true, doc="Mitochondria mode sets emission and initial LODs to 0.")
+    public Boolean mitochondria = false;
 
     /**
      * Only variants with tumor LODs exceeding this threshold will be written to the VCF, regardless of filter status.
@@ -115,13 +120,21 @@ public class M2ArgumentCollection extends AssemblyBasedCallerArgumentCollection 
      * {@link FilterMutectCalls} should then filter.
      */
     @Argument(fullName = EMISSION_LOD_LONG_NAME, shortName = EMISSION_LOG_SHORT_NAME, optional = true, doc = "LOD threshold to emit tumor variant to VCF.")
-    public double emissionLod = 3.0;
+    private double emissionLodArg = DEFAULT_EMISSION_LOD;
+
+    public double getEmissionLod() {
+        return mitochondria && emissionLodArg == DEFAULT_EMISSION_LOD ? DEFAULT_MITO_EMISSION_LOD : emissionLodArg;
+    }
 
     /**
      * Only variants with estimated tumor LODs exceeding this threshold will be considered active.
      */
     @Argument(fullName = INITIAL_TUMOR_LOD_LONG_NAME, shortName = INITIAL_TUMOR_LOD_SHORT_NAME, optional = true, doc = "LOD threshold to consider pileup active.")
-    public double initialTumorLod = 2.0;
+    private double initialTumorLod = DEFAULT_INITIAL_LOD;
+
+    public double getInitialLod() {
+        return mitochondria && initialTumorLod == DEFAULT_INITIAL_LOD ? DEFAULT_MITO_INITIAL_LOD : initialTumorLod;
+    }
 
     /**
      * PCR error rate for overlapping fragments in isActive()
@@ -140,6 +153,12 @@ public class M2ArgumentCollection extends AssemblyBasedCallerArgumentCollection 
      */
     @Argument(fullName = DOWNSAMPLING_STRIDE_LONG_NAME, shortName = DOWNSAMPLING_STRIDE_SHORT_NAME, optional = true, doc = "Downsample a pool of reads starting within a range of one or more bases.")
     public int downsamplingStride = 1;
+
+    /**
+     * Used to model autosomal coverage when calling mitochondria. The median tends to be a more robust center statistic.
+     */
+    @Argument(fullName = MEDIAN_AUTOSOMAL_COVERAGE_LONG_NAME, doc="Annotate possible polymorphic NuMT based on Poisson distribution given median autosomal coverage", optional = true)
+    public double autosomalCoverage;
 
     /**
      * Maximum number of suspicious reads (mediocre mapping quality or too many substitutions) allowed in a downsampling stride.

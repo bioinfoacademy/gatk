@@ -29,6 +29,8 @@ public class M2FiltersArgumentCollection extends AssemblyBasedCallerArgumentColl
     public static final String TUMOR_SEGMENTATION_LONG_NAME = "tumor-segmentation";
     public static final String ORIENTATION_BIAS_FDR_LONG_NAME = "orientation-bias-fdr"; // FDR = false discovery rate
     public static final String MAX_DISTANCE_TO_FILTERED_CALL_ON_SAME_HAPLOTYPE_LONG_NAME = "distance-on-haplotype";
+    public static final String LOD_BY_DEPTH = "lod-divided-by-depth";
+    public static final String NON_MT_ALT_READS_BY_ALT_READS = "non-mt-alts-divided-by-alts"; 
 
     public static final String FILTERING_STATS_LONG_NAME = "stats";
 
@@ -128,5 +130,33 @@ public class M2FiltersArgumentCollection extends AssemblyBasedCallerArgumentColl
     @Argument(fullName = MAX_DISTANCE_TO_FILTERED_CALL_ON_SAME_HAPLOTYPE_LONG_NAME, optional = true, doc = "On second filtering pass, variants with same PGT and PID tags as a filtered variant within this distance are filtered.")
     public int maxDistanceToFilteredCallOnSameHaplotype = 100;
 
+    /**
+     * Only variants with LOD divided by depth exceeding this threshold can pass filtering.
+     */
+    @Argument(fullName = LOD_BY_DEPTH,
+            doc="LOD by depth threshold for filtering variant", optional = true)
+    public double lodByDepth = 0.005;
+
+    /**
+     * Only variants with alt reads originally aligned outside of the mitochondria (known NuMTs) divided by total alt
+     * reads exceeding this threshold can pass filtering.
+     */
+    @Argument(fullName = NON_MT_ALT_READS_BY_ALT_READS,
+            doc="Known NuMT alts by total alts threshold for filtering variant", optional = true)
+    public double nonMtAltByAlt = 0.85;
+
+    /**
+     * Mitochondria mode includes "LOD by depth" and "Non MT alt reads by alt reads" filters, which are not included
+     * without mitochondria mode. Mitochondria mode only runs the following filters:
+     * Insufficient Evidence Filter
+     * Duplicated Alt Read Filter
+     * Strand Artifact Filter
+     * Base Quality Filter
+     * Mapping Quality Filter
+     * Chimeric Original Alignment Filter
+     * Lod By Depth Filter
+     */
+    @Argument(fullName = M2ArgumentCollection.MITOCHONDIRA_MODE_LONG_NAME, optional = true, doc = "Set filters to mitochondrial defaults")
+    public boolean mitochondria = false;
 
 }

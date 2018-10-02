@@ -101,20 +101,15 @@ public final class GATKVCFConstants {
     public static final String F2R1_KEY =                           "F2R1";
 
     // Mutect2-specific INFO keys
-    public static final String TUMOR_LOD_KEY =                      "TLOD";
+    //public static final String TUMOR_LOD_KEY =                      "TLOD";
     public static final String NORMAL_LOD_KEY =                     "NLOD";
     public static final String IN_PON_VCF_ATTRIBUTE =               "IN_PON";
     public static final String NORMAL_ARTIFACT_LOD_ATTRIBUTE =      "N_ART_LOD";
     public static final String POPULATION_AF_VCF_ATTRIBUTE =        "POP_AF";
     public static final String GERMLINE_POSTERIORS_VCF_ATTRIBUTE =  "P_GERMLINE";
     public static final String POSTERIOR_PROB_OF_CONTAMINATION_ATTRIBUTE =  "P_CONTAM";
-    public static final List<String> STANDARD_MUTECT_INFO_FIELDS = Arrays.asList(NORMAL_LOD_KEY, TUMOR_LOD_KEY, NORMAL_ARTIFACT_LOD_ATTRIBUTE,
-            EVENT_COUNT_IN_HAPLOTYPE_KEY, IN_PON_VCF_ATTRIBUTE, POPULATION_AF_VCF_ATTRIBUTE, GERMLINE_POSTERIORS_VCF_ATTRIBUTE, POSTERIOR_PROB_OF_CONTAMINATION_ATTRIBUTE);
-
-
-    // Mitochondrial-specific INFO keys
     public static final String LOD_KEY =                            "LOD";
-    public static final List<String> STANDARD_MITO_INFO_FIELDS = Arrays.asList(NORMAL_LOD_KEY, LOD_KEY, NORMAL_ARTIFACT_LOD_ATTRIBUTE,
+    public static final List<String> STANDARD_MUTECT_INFO_FIELDS = Arrays.asList(NORMAL_LOD_KEY, LOD_KEY, NORMAL_ARTIFACT_LOD_ATTRIBUTE,
             EVENT_COUNT_IN_HAPLOTYPE_KEY, IN_PON_VCF_ATTRIBUTE, POPULATION_AF_VCF_ATTRIBUTE, GERMLINE_POSTERIORS_VCF_ATTRIBUTE, POSTERIOR_PROB_OF_CONTAMINATION_ATTRIBUTE);
 
     // FORMAT keys
@@ -156,7 +151,7 @@ public final class GATKVCFConstants {
     public static final String ALIGNMENT_ARTIFACT_FILTER_NAME =               "alignment_artifact";
     public static final String PON_FILTER_NAME =                              "panel_of_normals"; //M2
     public static final String STR_CONTRACTION_FILTER_NAME =                  "str_contraction"; //M2
-    public static final String TUMOR_LOD_FILTER_NAME =                        "t_lod"; //M2
+    public final static String LOW_LOD_FILTER_NAME =                           "low_lod"; //M2
     public static final String MULTIALLELIC_FILTER_NAME =                     "multiallelic"; //M2
     public static final String STRAND_ARTIFACT_FILTER_NAME =                  "strand_artifact"; // M2
     public static final String DUPLICATED_EVIDENCE_FILTER_NAME =              "duplicate_evidence";
@@ -170,19 +165,17 @@ public final class GATKVCFConstants {
     public final static String BAD_HAPLOTYPE_FILTER_NAME =                      "bad_haplotype";
     public final static String CHIMERIC_ORIGINAL_ALIGNMENT_FILTER_NAME =        "chimeric_original_alignment"; //mitochondria
     public final static String LOW_AVG_ALT_QUALITY_FILTER_NAME =                "low_avg_alt_quality"; //mitochondria
-    public final static String LOW_LOD_FILTER_NAME =                            "low_lod"; //mitochondria
+
 
     public static final List<String> MUTECT_FILTER_NAMES = Arrays.asList(STR_CONTRACTION_FILTER_NAME,
-            PON_FILTER_NAME, CLUSTERED_EVENTS_FILTER_NAME, TUMOR_LOD_FILTER_NAME, GERMLINE_RISK_FILTER_NAME,
+            PON_FILTER_NAME, CLUSTERED_EVENTS_FILTER_NAME, LOW_LOD_FILTER_NAME, GERMLINE_RISK_FILTER_NAME,
             MULTIALLELIC_FILTER_NAME, STRAND_ARTIFACT_FILTER_NAME, ARTIFACT_IN_NORMAL_FILTER_NAME,
             MEDIAN_BASE_QUALITY_FILTER_NAME, MEDIAN_MAPPING_QUALITY_FILTER_NAME,
             MEDIAN_FRAGMENT_LENGTH_DIFFERENCE_FILTER_NAME,
             READ_POSITION_FILTER_NAME, CONTAMINATION_FILTER_NAME, DUPLICATED_EVIDENCE_FILTER_NAME,
-            READ_ORIENTATION_ARTIFACT_FILTER_NAME, BAD_HAPLOTYPE_FILTER_NAME);
-
-    public static final List<String> MITOCHONDRIAL_FILTER_NAMES = Arrays.asList(LOW_LOD_FILTER_NAME,
-            DUPLICATED_EVIDENCE_FILTER_NAME, CHIMERIC_ORIGINAL_ALIGNMENT_FILTER_NAME, LOW_AVG_ALT_QUALITY_FILTER_NAME,
-            MEDIAN_BASE_QUALITY_FILTER_NAME, MEDIAN_MAPPING_QUALITY_FILTER_NAME, STRAND_ARTIFACT_FILTER_NAME);
+            READ_ORIENTATION_ARTIFACT_FILTER_NAME, BAD_HAPLOTYPE_FILTER_NAME, CHIMERIC_ORIGINAL_ALIGNMENT_FILTER_NAME,
+            LOW_AVG_ALT_QUALITY_FILTER_NAME
+            );
 
     // Symbolic alleles
     public final static String SYMBOLIC_ALLELE_DEFINITION_HEADER_TAG = "ALT";

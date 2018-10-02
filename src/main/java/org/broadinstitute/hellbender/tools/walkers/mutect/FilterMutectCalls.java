@@ -11,6 +11,7 @@ import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
 import org.broadinstitute.barclay.help.DocumentedFeature;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.engine.*;
+import org.broadinstitute.hellbender.exceptions.UserException;
 import picard.cmdline.programgroups.VariantFilteringProgramGroup;
 import org.broadinstitute.hellbender.engine.FeatureContext;
 import org.broadinstitute.hellbender.engine.ReadsContext;
@@ -21,6 +22,7 @@ import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFHeaderLines;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -104,7 +106,7 @@ public final class FilterMutectCalls extends TwoPassVariantWalker {
         final VCFHeaderLine normalSampleHeaderLine = getHeaderForVariants().getMetaDataLine(Mutect2Engine.NORMAL_SAMPLE_KEY_IN_VCF_HEADER);
         final Optional<String> normalSample = normalSampleHeaderLine == null ? Optional.empty() : Optional.of(normalSampleHeaderLine.getValue());
 
-        filteringEngine = new Mutect2FilteringEngine(MTFAC, tumorSample, normalSample, GATKVCFConstants.TUMOR_LOD_KEY);
+        filteringEngine = new Mutect2FilteringEngine(MTFAC, tumorSample, normalSample);
         filteringFirstPass = new FilteringFirstPass(tumorSample);
     }
 
@@ -143,7 +145,19 @@ public final class FilterMutectCalls extends TwoPassVariantWalker {
         }
     }
 
-    private String getTumorSampleName(){
-        return getHeaderForVariants().getMetaDataLine(Mutect2Engine.TUMOR_SAMPLE_KEY_IN_VCF_HEADER).getValue();
+    private String getTumorSampleName() {
+        if (!MTFAC.mitochondria) {
+            return getHeaderForVariants().getMetaDataLine(Mutect2Engine.TUMOR_SAMPLE_KEY_IN_VCF_HEADER).getValue();
+        } else {
+            return getMitoSampleName();
+        }
+    }
+
+    private String getMitoSampleName() {
+        ArrayList<String> allSampleNames = getHeaderForVariants().getSampleNamesInOrder();
+        if(allSampleNames.size() != 1) {
+            throw new UserException(String.format("Expected single sample VCF in mitochondria mode, but there were %s samples.", allSampleNames.size()));
+        }
+        return allSampleNames.get(0);
     }
 }

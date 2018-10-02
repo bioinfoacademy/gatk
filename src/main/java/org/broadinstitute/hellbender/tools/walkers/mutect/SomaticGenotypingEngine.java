@@ -41,7 +41,6 @@ public class SomaticGenotypingEngine extends AssemblyBasedCallerGenotypingEngine
     public final String tumorSample;
     private final String normalSample;
     final boolean hasNormal;
-    private final String lodKey;
 
     // {@link GenotypingEngine} requires a non-null {@link AFCalculatorProvider} but this class doesn't need it.  Thus we make a dummy
     private static final AFCalculatorProvider DUMMY_AF_CALCULATOR_PROVIDER = new AFCalculatorProvider() {
@@ -60,14 +59,12 @@ public class SomaticGenotypingEngine extends AssemblyBasedCallerGenotypingEngine
     public SomaticGenotypingEngine(final SampleList samples,
                                    final M2ArgumentCollection MTAC,
                                    final String tumorSample,
-                                   final String normalSample,
-                                   final String lodKey) {
+                                   final String normalSample) {
         super(MTAC, samples, DUMMY_AF_CALCULATOR_PROVIDER, !MTAC.doNotRunPhysicalPhasing);
         this.MTAC = MTAC;
         this.tumorSample = tumorSample;
         this.normalSample = normalSample;
         hasNormal = normalSample != null;
-        this.lodKey = lodKey;
     }
 
     /**
@@ -130,7 +127,7 @@ public class SomaticGenotypingEngine extends AssemblyBasedCallerGenotypingEngine
             final Set<Allele> forcedAlleles = getAllelesConsistentWithGivenAlleles(givenAlleles, loc, mergedVC);
 
             final List<Allele> tumorAltAlleles = mergedVC.getAlternateAlleles().stream()
-                    .filter(allele -> forcedAlleles.contains(allele) || tumorLog10Odds.getAlt(allele) > MTAC.emissionLod)
+                    .filter(allele -> forcedAlleles.contains(allele) || tumorLog10Odds.getAlt(allele) > MTAC.getEmissionLod())
                     .collect(Collectors.toList());
 
             final long somaticAltCount = tumorAltAlleles.stream()
@@ -156,7 +153,7 @@ public class SomaticGenotypingEngine extends AssemblyBasedCallerGenotypingEngine
             final VariantContextBuilder callVcb = new VariantContextBuilder(mergedVC)
                     .alleles(allAllelesToEmit)
                     .attributes(populationAFAnnotation)
-                    .attribute(lodKey, tumorAltAlleles.stream().mapToDouble(tumorLog10Odds::getAlt).toArray());
+                    .attribute(GATKVCFConstants.LOD_KEY, tumorAltAlleles.stream().mapToDouble(tumorLog10Odds::getAlt).toArray());
 
             normalLog10Odds.ifPresent(values -> callVcb.attribute(GATKVCFConstants.NORMAL_LOD_KEY, values.asDoubleArray(tumorAltAlleles)));
             normalArtifactLog10Odds.ifPresent(values -> callVcb.attribute(GATKVCFConstants.NORMAL_ARTIFACT_LOD_ATTRIBUTE, values.asDoubleArray(tumorAltAlleles)));

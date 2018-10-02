@@ -31,8 +31,8 @@
 ##INFO=<ID=STR,Number=0,Type=Flag,Description="Variant is a short tandem repeat">
 ##Mutect Version=2.1
 ##contig=<ID=chrM,length=16569>
-##filtering_status=Warning: unfiltered Mutect 2 calls.  Please run FilterMitochondrialCalls to remove false positives.
-##source=MitochondrialCaller
+##filtering_status=Warning: unfiltered Mutect2 calls.  Please run FilterMutectCalls to remove false positives.
+##source=Mutect2
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	NA12878
 chrM	152	.	T	C	.	.	DP=1582;ECNT=1;LOD=5266.19;POP_AF=5.000e-08	GT:AD:AF:F1R2:F2R1:MBQ:MFRL:MMQ:MPOS:ORIGINAL_CONTIG_MISMATCH:POTENTIAL_POLYMORPHIC_NUMT	0/1:3,1556:0.998:2,777:1,779:30,30:16270,369:60:42:0:true
 chrM	263	.	A	G	.	.	DP=858;ECNT=4;LOD=2641.72;POP_AF=5.000e-08	GT:AD:AF:F1R2:F2R1:MBQ:MFRL:MMQ:MPOS:ORIGINAL_CONTIG_MISMATCH	0/1:1,831:0.999:0,403:1,428:10,30:292,305:60:32:800

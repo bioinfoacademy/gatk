@@ -122,24 +122,4 @@ public abstract class AssemblyBasedCallerArgumentCollection extends StandardCall
     @Advanced
     @Argument(fullName = SMITH_WATERMAN_LONG_NAME, doc = "Which Smith-Waterman implementation to use, generally FASTEST_AVAILABLE is the right choice", optional = true)
     public SmithWatermanAligner.Implementation smithWatermanImplementation = SmithWatermanAligner.Implementation.JAVA;
-
-    public AssemblyBasedCallerArgumentCollection(){}
-
-    //TODO: copy the arg collections themselves
-    public AssemblyBasedCallerArgumentCollection(AssemblyBasedCallerArgumentCollection other) {
-        super(other);
-        this.assemblyRegionTrimmerArgs = other.assemblyRegionTrimmerArgs;
-        this.assemblerArgs = other.assemblerArgs;
-        this.likelihoodArgs = other.likelihoodArgs;
-        this.debug = other.debug;
-        this.useFilteredReadMapForAnnotations = other.useFilteredReadMapForAnnotations;
-        this.bamOutputPath = other.bamOutputPath;
-        this.bamWriterType = other.bamWriterType;
-        this.dontUseSoftClippedBases = other.dontUseSoftClippedBases;
-        this.captureAssemblyFailureBAM = other.captureAssemblyFailureBAM;
-        this.errorCorrectReads = other.errorCorrectReads;
-        this.doNotRunPhysicalPhasing = other.doNotRunPhysicalPhasing;
-        this.minBaseQualityScore = other.minBaseQualityScore;
-        this.smithWatermanImplementation = other.smithWatermanImplementation;
-    }
 }

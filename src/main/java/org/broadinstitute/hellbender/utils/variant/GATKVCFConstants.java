@@ -101,14 +101,13 @@ public final class GATKVCFConstants {
     public static final String F2R1_KEY =                           "F2R1";
 
     // Mutect2-specific INFO keys
-    //public static final String TUMOR_LOD_KEY =                      "TLOD";
+    public static final String LOD_KEY =                            "LOD";
     public static final String NORMAL_LOD_KEY =                     "NLOD";
     public static final String IN_PON_VCF_ATTRIBUTE =               "IN_PON";
     public static final String NORMAL_ARTIFACT_LOD_ATTRIBUTE =      "N_ART_LOD";
     public static final String POPULATION_AF_VCF_ATTRIBUTE =        "POP_AF";
     public static final String GERMLINE_POSTERIORS_VCF_ATTRIBUTE =  "P_GERMLINE";
     public static final String POSTERIOR_PROB_OF_CONTAMINATION_ATTRIBUTE =  "P_CONTAM";
-    public static final String LOD_KEY =                            "LOD";
     public static final List<String> STANDARD_MUTECT_INFO_FIELDS = Arrays.asList(NORMAL_LOD_KEY, LOD_KEY, NORMAL_ARTIFACT_LOD_ATTRIBUTE,
             EVENT_COUNT_IN_HAPLOTYPE_KEY, IN_PON_VCF_ATTRIBUTE, POPULATION_AF_VCF_ATTRIBUTE, GERMLINE_POSTERIORS_VCF_ATTRIBUTE, POSTERIOR_PROB_OF_CONTAMINATION_ATTRIBUTE);
 

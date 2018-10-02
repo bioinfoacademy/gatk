@@ -716,7 +716,7 @@ public class Mutect2IntegrationTest extends CommandLineProgramTest {
         return new ImmutablePair<>(sensitivity, fdr);
     }
 
-    protected static String keyForVariant( final VariantContext variant ) {
+    private static String keyForVariant( final VariantContext variant ) {
         return String.format("%s:%d-%d %s", variant.getContig(), variant.getStart(), variant.getEnd(), variant.getAlleles());
     }
 }

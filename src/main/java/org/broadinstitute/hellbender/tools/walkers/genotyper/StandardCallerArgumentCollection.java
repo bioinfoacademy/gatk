@@ -21,12 +21,6 @@ import java.util.Map;
 public class StandardCallerArgumentCollection implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public StandardCallerArgumentCollection(){}
-
-    public StandardCallerArgumentCollection(StandardCallerArgumentCollection other) {
-        copyStandardCallerArgsFrom(other);
-    }
-
     /**
      * Copies the values from other into this StandardCallerArgumentCollection
      *

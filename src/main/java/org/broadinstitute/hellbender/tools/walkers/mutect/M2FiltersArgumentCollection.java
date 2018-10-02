@@ -30,7 +30,7 @@ public class M2FiltersArgumentCollection extends AssemblyBasedCallerArgumentColl
     public static final String ORIENTATION_BIAS_FDR_LONG_NAME = "orientation-bias-fdr"; // FDR = false discovery rate
     public static final String MAX_DISTANCE_TO_FILTERED_CALL_ON_SAME_HAPLOTYPE_LONG_NAME = "distance-on-haplotype";
     public static final String LOD_BY_DEPTH = "lod-divided-by-depth";
-    public static final String NON_MT_ALT_READS_BY_ALT_READS = "non-mt-alts-divided-by-alts"; 
+    public static final String NON_MT_ALT_READS_BY_ALT_READS = "non-mt-alts-divided-by-alts";
 
     public static final String FILTERING_STATS_LONG_NAME = "stats";
 

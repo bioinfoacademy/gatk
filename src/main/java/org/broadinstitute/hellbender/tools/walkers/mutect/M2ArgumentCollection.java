@@ -47,8 +47,6 @@ public class M2ArgumentCollection extends AssemblyBasedCallerArgumentCollection 
     public static final double DEFAULT_INITIAL_LOD = 2.0;
     public static final double DEFAULT_MITO_INITIAL_LOD = 0;
 
-    public M2ArgumentCollection(){}
-
     //TODO: HACK ALERT HACK ALERT HACK ALERT
     //TODO: GATK4 does not yet have a way to tag inputs, eg -I:tumor tumor.bam -I:normal normal.bam,
     //TODO: so for now we require the user to specify bams *both* as inputs, with -I tumor.bam -I normal.bam
@@ -108,7 +106,7 @@ public class M2ArgumentCollection extends AssemblyBasedCallerArgumentCollection 
     /**
      * Mitochondria mode changes default values for Emission Lod and Initial Lod to 0 to increase sensitivity. Tumor
      * sample is also not explicitly required in mitochondria mode since a single sample bam is expected as input.
-     * Mitochondria mode is also recommended in FilterMutectCalls if used here.
+     * Mitochondria mode is also required in FilterMutectCalls if used here.
      */
     @Argument(fullName = MITOCHONDIRA_MODE_LONG_NAME, optional = true, doc="Mitochondria mode sets emission and initial LODs to 0.")
     public Boolean mitochondria = false;

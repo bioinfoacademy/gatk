@@ -439,7 +439,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
                     testFolderInputPath + inputVcfName,
                     outputFile,
                     testFolderInputPath + referencePath,
-                    getFuncotatorLargeDataValidationTestInputPath() + LARGE_DATASOURCES_FOLDER,
+                    dataSourcesPath,
                     referenceVersion,
                     outFormat,
                     true);
@@ -472,6 +472,35 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
 
         System.out.println("Total Elapsed Time: " + (endTime - overallStartTime) / 1e9 + "s");
     }
+
+//    @Test
+//    public void regressionTest(final String inputVcfName,
+//                               final String referencePath,
+//                               final String referenceVersion,
+//                               final String dataSourcesPath,
+//                               final String expectedOutputPath ) {
+//
+//        long startTime = 0, endTime = 0;
+//        final long overallStartTime = System.nanoTime();
+//
+//        final File outputFile = getOutputFile(inputVcfName + ".funcotator", "vcf");
+//
+//        final ArgumentsBuilder arguments = createBaselineArgumentsForFuncotator(
+//                testFolderInputPath + inputVcfName,
+//                outputFile,
+//                testFolderInputPath + referencePath,
+//                dataSourcesPath,
+//                referenceVersion,
+//                FuncotatorArgumentDefinitions.OutputFormatType.VCF,
+//                true);
+//
+//        // Run the tool with our args:
+//        startTime = System.nanoTime();
+//        runCommandLine(arguments);
+//        endTime = System.nanoTime();
+//
+//        System.out.println("  Elapsed Time: " + (endTime - startTime) / 1e9 + "s");
+//    }
 
     @Test(dataProvider = "provideForIntegrationTest")
     public void exhaustiveArgumentTest(final String dataSourcesPath,
@@ -562,73 +591,85 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
                 .count(), NUM_CLINVAR_HITS, "Found unexpected number of ClinVar hits!");
     }
 
-    // TODO: Uncomment and fix test later!
-//    @Test
-//    public void testManualAnnotationsCorrectness() {
-//
-//        final FuncotatorArgumentDefinitions.OutputFormatType outputFormatType = FuncotatorArgumentDefinitions.OutputFormatType.VCF;
-//        final File outputFile = getOutputFile(outputFormatType);
-//
-//        final ArgumentsBuilder arguments = createBaselineArgumentsForFuncotator(
-//                PIK3CA_VCF_HG19,
-//                outputFile,
-//                b37Chr3Ref,
-//                DS_PIK3CA_DIR,
-//                FuncotatorTestConstants.REFERENCE_VERSION_HG19,
-//                outputFormatType,
-//                false);
-//
-//        // We need this argument since we are testing on a subset of b37
-//        arguments.addBooleanArgument(FuncotatorArgumentDefinitions.FORCE_B37_TO_HG19_REFERENCE_CONTIG_CONVERSION, true);
-//
-//        // Add our manual annotations to the arguments:
-//        addManualAnnotationsToArguments(arguments);
-//
-//        // Run the tool:
-//        runCommandLine(arguments);
-//
-//        // ===========================================
-//        // Now let's validate that everything's there:
-//
-//        final Pair<VCFHeader, List<VariantContext>> vcfInfo = VariantContextTestUtils.readEntireVCFIntoMemory(outputFile.getAbsolutePath());
-//        final List<VariantContext> variantContexts = vcfInfo.getRight();
-//
-//        final VCFHeader vcfHeader = vcfInfo.getLeft();
-//        final VCFInfoHeaderLine funcotationHeaderLine = vcfHeader.getInfoHeaderLine(VcfOutputRenderer.FUNCOTATOR_VCF_FIELD_NAME);
-//        final String[] funcotationFieldNames = FuncotatorUtils.extractFuncotatorKeysFromHeaderDescription(funcotationHeaderLine.getDescription());
-//
-//        for ( final VariantContext vc : variantContexts ) {
-//
-//            final String tx = FuncotationMap.NO_TRANSCRIPT_AVAILABLE_KEY;
-//            final Allele altAllele = vc.getAlternateAllele(0);
-//
-//            // Get our Funcotations in a map:
-//            final String funcotation = vc.getAttributeAsString(VcfOutputRenderer.FUNCOTATOR_VCF_FIELD_NAME, "");
-//            Assert.assertNotEquals(funcotation, "");
-//            final FuncotationMap funkyMap =
-//                    FuncotationMap.createAsAllTableFuncotationsFromVcf(
-//                            tx,
-//                            funcotationFieldNames,
-//                            funcotation,
-//                            altAllele,
-//                            "VCF");
-//
-//            // Verify our manual annotations are in the output:
-//            for ( final String manualAnnotation : getManualAnnotations() ) {
-//
-//                // Get our expected field name and value:
-//                final String expectedFieldName = manualAnnotation.substring(0, manualAnnotation.indexOf(':'));
-//                final String expectedFieldValue = manualAnnotation.substring(manualAnnotation.indexOf(':')+1, manualAnnotation.length());
-//
-//                // Check to make sure there is only 1 occurrence of each field:
-//                Assert.assertEquals(StringUtils.countMatches(funcotation, expectedFieldName), 1);
-//
-//                // Now verify the value of the funcotation:
-//                Assert.assertEquals(funkyMap.getFieldValue(tx, expectedFieldName, altAllele), expectedFieldValue);
-//            }
-//            vc.getAttributeAsString(VcfOutputRenderer.FUNCOTATOR_VCF_FIELD_NAME, "");
-//        }
-//    }
+    @Test
+    public void testManualAnnotationsCorrectness() {
+
+        final FuncotatorArgumentDefinitions.OutputFormatType outputFormatType = FuncotatorArgumentDefinitions.OutputFormatType.VCF;
+        final File outputFile = getOutputFile(outputFormatType);
+
+        final ArgumentsBuilder arguments = createBaselineArgumentsForFuncotator(
+                PIK3CA_VCF_HG19,
+                outputFile,
+                b37Chr3Ref,
+                DS_PIK3CA_DIR,
+                FuncotatorTestConstants.REFERENCE_VERSION_HG19,
+                outputFormatType,
+                false);
+
+        // We need this argument since we are testing on a subset of b37
+        arguments.addBooleanArgument(FuncotatorArgumentDefinitions.FORCE_B37_TO_HG19_REFERENCE_CONTIG_CONVERSION, true);
+
+        // Add our manual annotations to the arguments:
+        addManualAnnotationsToArguments(arguments);
+
+        // Run the tool:
+        runCommandLine(arguments);
+
+        // ===========================================
+        // Now let's validate that everything's there:
+
+        final Pair<VCFHeader, List<VariantContext>> vcfInfo = VariantContextTestUtils.readEntireVCFIntoMemory(outputFile.getAbsolutePath());
+        final List<VariantContext> variantContexts = vcfInfo.getRight();
+
+        final VCFHeader vcfHeader = vcfInfo.getLeft();
+        final VCFInfoHeaderLine funcotationHeaderLine = vcfHeader.getInfoHeaderLine(VcfOutputRenderer.FUNCOTATOR_VCF_FIELD_NAME);
+        final String[] funcotationFieldNames = FuncotatorUtils.extractFuncotatorKeysFromHeaderDescription(funcotationHeaderLine.getDescription());
+
+        // Ensure that the field names are all unique:
+        final Set<String> fieldNameSet = new HashSet<>(Arrays.asList(funcotationFieldNames));
+        Assert.assertEquals(fieldNameSet.size(), funcotationFieldNames.length);
+
+        for ( int i = 0; i < variantContexts.size(); ++i ) {
+
+            final VariantContext vc = variantContexts.get(i);
+
+            final String tx = FuncotationMap.NO_TRANSCRIPT_AVAILABLE_KEY;
+            final Allele altAllele = vc.getAlternateAllele(0);
+
+            // Get our Funcotations in a map:
+            final String funcotation = vc.getAttributeAsString(VcfOutputRenderer.FUNCOTATOR_VCF_FIELD_NAME, "");
+            Assert.assertNotEquals(funcotation, "");
+            final FuncotationMap funkyMap =
+                    FuncotationMap.createAsAllTableFuncotationsFromVcf(
+                            tx,
+                            funcotationFieldNames,
+                            funcotation,
+                            altAllele,
+                            "VCF");
+
+            // Verify our manual annotations are in the output:
+            for ( final String manualAnnotation : getManualAnnotations() ) {
+
+                // Get our expected field name and value:
+                final String expectedFieldName = manualAnnotation.substring(0, manualAnnotation.indexOf(':'));
+                final String expectedFieldValue = manualAnnotation.substring(manualAnnotation.indexOf(':')+1, manualAnnotation.length());
+
+                // Now verify the value of the funcotation:
+                Assert.assertEquals(funkyMap.getFieldValue(tx, expectedFieldName, altAllele), expectedFieldValue);
+            }
+
+            // Verify our annotation overrides are in the output:
+            for ( final String annotationOverride : getAnnotationOverrides() ) {
+
+                // Get our expected field name and value:
+                final String expectedFieldName = annotationOverride.substring(0, annotationOverride.indexOf(':'));
+                final String expectedFieldValue = annotationOverride.substring(annotationOverride.indexOf(':')+1, annotationOverride.length());
+
+                // Now verify the value of the funcotation:
+                Assert.assertEquals(funkyMap.getFieldValue(tx, expectedFieldName, altAllele), expectedFieldValue);
+            }
+        }
+    }
 
     @Test
     public void testXsvLocatableAnnotationsHaveOnlyOneEntryForMultiHitLocations() {

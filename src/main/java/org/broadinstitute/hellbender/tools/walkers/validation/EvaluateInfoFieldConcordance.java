@@ -7,6 +7,7 @@ import org.apache.commons.collections4.Predicate;
 
 import htsjdk.variant.variantcontext.VariantContext;
 
+import org.broadinstitute.barclay.argparser.Advanced;
 import org.broadinstitute.barclay.argparser.Argument;
 import org.broadinstitute.barclay.argparser.BetaFeature;
 import org.broadinstitute.barclay.help.DocumentedFeature;
@@ -71,6 +72,14 @@ public class EvaluateInfoFieldConcordance extends AbstractConcordanceWalker {
     @Argument(fullName="truth-info-key", shortName="truth-info-key", doc="Info key from truth vcf")
     protected String truthInfoKey;
 
+    @Advanced
+    @Argument(fullName="warn-big-differences",
+            shortName="warn-big-differences",
+            doc="If set differences in the info key values greater than epsilon will trigger warnings.",
+            optional=true)
+    protected boolean warnBigDifferences = false;
+
+    @Advanced
     @Argument(fullName="epsilon", shortName="epsilon", doc="Difference tolerance", optional=true)
     protected double epsilon = 0.1;
 
@@ -98,8 +107,11 @@ public class EvaluateInfoFieldConcordance extends AbstractConcordanceWalker {
         ConcordanceState concordanceState = truthVersusEval.getConcordance();
         switch (concordanceState) {
             case TRUE_POSITIVE: {
-                snpCount++;
-                indelCount++;
+                if(truthVersusEval.getEval().isSNP()){
+                    snpCount++;
+                } else if (truthVersusEval.getEval().isIndel()) {
+                    indelCount++;
+                }
                 this.infoDifference(truthVersusEval.getEval(), truthVersusEval.getTruth());
                 break;
             }
@@ -128,7 +140,7 @@ public class EvaluateInfoFieldConcordance extends AbstractConcordanceWalker {
                 this.indelSumDelta += Math.sqrt(deltaSquared);
                 this.indelSumDeltaSquared += deltaSquared;
             }
-            if (Math.abs(delta) > this.epsilon) {
+            if (warnBigDifferences && Math.abs(delta) > this.epsilon) {
                 this.logger.warn(String.format("Difference (%f) greater than epsilon (%f) at %s:%d %s:", delta, this.epsilon, eval.getContig(), eval.getStart(), eval.getAlleles().toString()));
                 this.logger.warn(String.format("\t\tTruth info: " + truth.getAttributes().toString()));
                 this.logger.warn(String.format("\t\tEval info: " + eval.getAttributes().toString()));

@@ -46,26 +46,51 @@ public class InfoConcordanceRecord {
         this.std = std;
     }
 
+    /**
+     *
+     * @return Variant type (e.g. SNP or INDEL)
+     */
     public VariantContext.Type getVariantType() {
         return this.type;
     }
 
+    /**
+     *
+     * @return The mean of the differences between two INFO fields
+     */
     public double getMean() {
         return this.mean;
     }
 
+    /**
+     *
+     * @return The Standard Deviation of the differences between two INFO fields
+     */
     public double getStd() {
         return this.std;
     }
 
+    /**
+     *
+     * @return The INFO field for the eval VCF
+     */
     public String getEvalKey() {
         return this.evalKey;
     }
 
+    /**
+     *
+     * @return The INFO field for the truth VCF
+     */
     public String getTrueKey() {
         return this.trueKey;
     }
 
+    /**
+     * Get a table writer
+     * @param outputTable A Path where the output table will be written
+     * @return A Table writer for INFO field concordances
+     */
     public static InfoConcordanceWriter getWriter(Path outputTable) {
         try {
             InfoConcordanceWriter writer = new InfoConcordanceWriter(outputTable);
@@ -76,6 +101,9 @@ public class InfoConcordanceRecord {
         }
     }
 
+    /**
+     * Table writing class for InfoConcordanceRecords
+     */
     public static class InfoConcordanceWriter extends TableWriter<InfoConcordanceRecord> {
         private InfoConcordanceWriter(Path output) throws IOException {
             super(output.toFile(), new TableColumnCollection(INFO_CONCORDANCE_COLUMN_HEADER));
@@ -91,6 +119,9 @@ public class InfoConcordanceRecord {
         }
     }
 
+    /**
+     * Table reading class for InfoConcordanceRecords
+     */
     public static class InfoConcordanceReader extends TableReader<InfoConcordanceRecord> {
         public InfoConcordanceReader(Path summary) throws IOException {
             super(summary.toFile());

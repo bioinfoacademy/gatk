@@ -6,6 +6,7 @@ import org.broadinstitute.hellbender.engine.AbstractConcordanceWalker;
 import org.broadinstitute.hellbender.testutils.ArgumentsBuilder;
 import org.broadinstitute.hellbender.utils.variant.GATKVCFConstants;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.nio.file.Path;
@@ -13,45 +14,16 @@ import java.nio.file.Path;
 public class EvaluateInfoFieldConcordanceIntegrationTest extends CommandLineProgramTest {
     final double epsilon = 1e-3;
 
-    @Test
-    public void testSimple() throws Exception {
-        final String inputVcf = largeFileTestDir + "VQSR/expected/chr20_tiny_tf_python_gpu2.vcf";
-        final Path summary = createTempPath("summary", ".txt");
-        final ArgumentsBuilder argsBuilder = new ArgumentsBuilder();
-        argsBuilder.addArgument(AbstractConcordanceWalker.EVAL_VARIANTS_SHORT_NAME, inputVcf)
-                .addArgument(AbstractConcordanceWalker.TRUTH_VARIANTS_LONG_NAME, inputVcf)
-                .addArgument("eval-info-key", GATKVCFConstants.CNN_2D_KEY)
-                .addArgument("truth-info-key", "NOVA_HISEQ_MIX_SMALL")
-                .addArgument(EvaluateInfoFieldConcordance.SUMMARY_LONG_NAME, summary.toString());
-        runCommandLine(argsBuilder);
-
-        try(InfoConcordanceRecord.InfoConcordanceReader
-                    reader = new InfoConcordanceRecord.InfoConcordanceReader(summary)) {
-            InfoConcordanceRecord snpRecord = reader.readRecord();
-            InfoConcordanceRecord indelRecord = reader.readRecord();
-
-            Assert.assertEquals(snpRecord.getVariantType(), VariantContext.Type.SNP);
-            Assert.assertEquals(indelRecord.getVariantType(), VariantContext.Type.INDEL);
-
-            // numbers verified by manual inspection
-            Assert.assertEquals(snpRecord.getMean(), 0.086470, epsilon);
-            Assert.assertEquals(snpRecord.getStd(), 0.209133, epsilon);
-            Assert.assertEquals(indelRecord.getMean(), 0.013632, epsilon);
-            Assert.assertEquals(indelRecord.getStd(), 0.069784, epsilon);
-        }
-    }
-
-    @Test
-    public void test2Vcfs() throws Exception {
-        final String inputVcf1 = largeFileTestDir + "VQSR/expected/chr20_tiny_tf_python_cpu.vcf";
-        final String inputVcf2 = largeFileTestDir + "VQSR/expected/chr20_tiny_th_python_gpu.vcf";
-
+    @Test(dataProvider= "infoConcordanceDataProvider")
+    public void testInfoConcordanceFromProvider(String inputVcf1, String inputVcf2, String evalKey, String truthKey,
+                                                double snpMean, double snpSTD,
+                                                double indelMean, double indelSTD) throws Exception {
         final Path summary = createTempPath("summary", ".txt");
         final ArgumentsBuilder argsBuilder = new ArgumentsBuilder();
         argsBuilder.addArgument(AbstractConcordanceWalker.EVAL_VARIANTS_SHORT_NAME, inputVcf1)
                 .addArgument(AbstractConcordanceWalker.TRUTH_VARIANTS_LONG_NAME, inputVcf2)
-                .addArgument("eval-info-key", GATKVCFConstants.CNN_1D_KEY)
-                .addArgument("truth-info-key", "NOVA_HISEQ_MIX_1D_RAB")
+                .addArgument("eval-info-key", evalKey)
+                .addArgument("truth-info-key", truthKey)
                 .addArgument(EvaluateInfoFieldConcordance.SUMMARY_LONG_NAME, summary.toString());
         runCommandLine(argsBuilder);
 
@@ -63,11 +35,31 @@ public class EvaluateInfoFieldConcordanceIntegrationTest extends CommandLineProg
             Assert.assertEquals(snpRecord.getVariantType(), VariantContext.Type.SNP);
             Assert.assertEquals(indelRecord.getVariantType(), VariantContext.Type.INDEL);
 
-            // numbers verified by manual inspection
-            Assert.assertEquals(snpRecord.getMean(), 0.000203, epsilon);
-            Assert.assertEquals(snpRecord.getStd(), 0.000159, epsilon);
-            Assert.assertEquals(indelRecord.getMean(), 0.000049, epsilon);
-            Assert.assertEquals(indelRecord.getStd(), 0.000119, epsilon);
+            Assert.assertEquals(snpRecord.getMean(), snpMean, epsilon);
+            Assert.assertEquals(snpRecord.getStd(), snpSTD, epsilon);
+            Assert.assertEquals(indelRecord.getMean(), indelMean, epsilon);
+            Assert.assertEquals(indelRecord.getStd(), indelSTD, epsilon);
         }
+    }
+
+    @DataProvider
+    public Object[][] infoConcordanceDataProvider() {
+        return new Object [][]{
+                new Object[]{
+                        largeFileTestDir + "VQSR/expected/chr20_tiny_tf_python_gpu2.vcf",
+                        largeFileTestDir + "VQSR/expected/chr20_tiny_tf_python_gpu2.vcf",
+                        GATKVCFConstants.CNN_2D_KEY,
+                        "NOVA_HISEQ_MIX_SMALL",
+                        0.108878, 0.229415, 0.067024, 0.142705 // numbers verified by manual inspection
+
+                },
+                new Object[]{
+                        largeFileTestDir + "VQSR/expected/chr20_tiny_tf_python_cpu.vcf",
+                        largeFileTestDir + "VQSR/expected/chr20_tiny_th_python_gpu.vcf",
+                        GATKVCFConstants.CNN_1D_KEY,
+                        "NOVA_HISEQ_MIX_1D_RAB",
+                        0.000256, 0.000136, 0.000240, 0.000153 // numbers verified by manual inspection
+                }
+        };
     }
 }

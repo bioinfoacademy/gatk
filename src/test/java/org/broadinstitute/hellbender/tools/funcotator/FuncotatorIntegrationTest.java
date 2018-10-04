@@ -763,9 +763,9 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
     @DataProvider(name = "provideForMafVcfConcordance")
     final Object[][] provideForMafVcfConcordance() {
         return new Object[][]{
-//                {PIK3CA_VCF_HG19_SNPS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_PIK3CA_DIR, true, 15},
-//                {PIK3CA_VCF_HG19_INDELS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_PIK3CA_DIR, true, 57},
-//                {MUC16_VCF_HG19, hg19Chr19Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_MUC16_DIR, false, 2057},
+                {PIK3CA_VCF_HG19_SNPS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_PIK3CA_DIR, true, 15},
+                {PIK3CA_VCF_HG19_INDELS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_PIK3CA_DIR, true, 57},
+                {MUC16_VCF_HG19, hg19Chr19Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_MUC16_DIR, false, 2057},
                 {
                         PIK3CA_VCF_HG38,
                         hg38Chr3Ref,
@@ -776,7 +776,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
                         false,
                         104,
                 },
-//                {PIK3CA_VCF_HG19_INDELS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, VCF_FIELDS_GENCODE_19_DS, MAF_FIELDS_GENCODE_DS, DS_PIK3CA_DIR, true, 57},
+                {PIK3CA_VCF_HG19_INDELS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, VCF_FIELDS_GENCODE_19_DS, MAF_FIELDS_GENCODE_DS, DS_PIK3CA_DIR, true, 57},
         };
     }
 
@@ -921,15 +921,28 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
             final List<String> vcfFieldValues = new ArrayList<>();
             for (final VariantContext v: variantContexts) {
 
+                final String transcriptFuncotationName = "Gencode_" + (funcotatorRef.equals("hg19") ? "19" : "28") + "_annotationTranscript";
+
                 final Map<Allele, FuncotationMap> alleleFuncotationMapMap = FuncotatorUtils.createAlleleToFuncotationMapFromFuncotationVcfAttribute(
-                        funcotationKeys, v, "Gencode_19_annotationTranscript", "TEST");
+                        funcotationKeys, v, transcriptFuncotationName, "TEST");
 
                 for (final Allele alternateAllele : v.getAlternateAlleles() ) {
                     final FuncotationMap funcotationMap = alleleFuncotationMapMap.get(alternateAllele);
                     vcfFieldValues.add(funcotationMap.getFieldValue(funcotationMap.getTranscriptList().get(0), annotationToCheckVcf, alternateAllele));
                 }
             }
-            Assert.assertEquals(mafFieldValues, vcfFieldValues, "Failed matching (VCF: " + annotationToCheckVcf + " , MAF: " + annotationToCheckMaf + ")");
+
+            // "Fuzzy" matching between VCF and MAF by allowing blank VCF fields to be Unknown in the MAF.
+            // This is a temporary hold-over until we can do full aliased comparisons of fields.
+            // TODO: Update with better comparison using aliases when they are fully implemented.
+            if ( !Objects.equals(mafFieldValues, vcfFieldValues) ) {
+                Assert.assertEquals(mafFieldValues.size(), vcfFieldValues.size());
+                mafFieldValues.stream().map( v -> {Assert.assertEquals(v, "Unknown"); return true;} );
+                vcfFieldValues.stream().map( v -> {Assert.assertEquals(v, ""); return true;} );
+            }
+            else {
+                Assert.assertEquals(mafFieldValues, vcfFieldValues, "Failed matching (VCF: " + annotationToCheckVcf + " , MAF: " + annotationToCheckMaf + ")");
+            }
         }
     }
 

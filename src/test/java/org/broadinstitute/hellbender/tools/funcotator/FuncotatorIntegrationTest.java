@@ -225,6 +225,28 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
     //==================================================================================================================
 
     @DataProvider
+    private Object[][] provideForRegressionTest() {
+
+        // TODO: Make this use paths for the references that are not in the special testing folder!
+        return new Object[][] {
+                {
+                        FuncotatorTestConstants.REGRESSION_TEST_HG19_DATA_SET_1,
+                        "Homo_sapiens_assembly19.fasta",
+                        FuncotatorTestConstants.REFERENCE_VERSION_HG19,
+                        getFuncotatorLargeDataValidationTestInputPath() + LARGE_DATASOURCES_FOLDER,
+                        FuncotatorTestConstants.REGRESSION_TEST_HG19_DATA_SET_1_EXPECTED_OUTPUT
+                },
+                {
+                        FuncotatorTestConstants.REGRESSION_TEST_HG19_DATA_SET_2,
+                        "Homo_sapiens_assembly19.fasta",
+                        FuncotatorTestConstants.REFERENCE_VERSION_HG19,
+                        getFuncotatorLargeDataValidationTestInputPath() + LARGE_DATASOURCES_FOLDER,
+                        FuncotatorTestConstants.REGRESSION_TEST_HG19_DATA_SET_2_EXPECTED_OUTPUT
+                },
+        };
+    }
+
+    @DataProvider
     Iterator<Object[]> provideForIntegrationTest() {
 
         final ArrayList<Object[]> testCases = new ArrayList<>();
@@ -473,34 +495,57 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
         System.out.println("Total Elapsed Time: " + (endTime - overallStartTime) / 1e9 + "s");
     }
 
-//    @Test
-//    public void regressionTest(final String inputVcfName,
-//                               final String referencePath,
-//                               final String referenceVersion,
-//                               final String dataSourcesPath,
-//                               final String expectedOutputPath ) {
-//
-//        long startTime = 0, endTime = 0;
-//        final long overallStartTime = System.nanoTime();
-//
-//        final File outputFile = getOutputFile(inputVcfName + ".funcotator", "vcf");
-//
-//        final ArgumentsBuilder arguments = createBaselineArgumentsForFuncotator(
-//                testFolderInputPath + inputVcfName,
-//                outputFile,
-//                testFolderInputPath + referencePath,
-//                dataSourcesPath,
-//                referenceVersion,
-//                FuncotatorArgumentDefinitions.OutputFormatType.VCF,
-//                true);
-//
-//        // Run the tool with our args:
-//        startTime = System.nanoTime();
-//        runCommandLine(arguments);
-//        endTime = System.nanoTime();
-//
-//        System.out.println("  Elapsed Time: " + (endTime - startTime) / 1e9 + "s");
-//    }
+    @Test(dataProvider = "provideForRegressionTest",
+            groups = {"funcotatorValidation"})
+    public void regressionTest(final String inputVcfName,
+                               final String referencePath,
+                               final String referenceVersion,
+                               final String dataSourcesPath,
+                               final String expectedOutputPath ) {
+
+        // TODO: Make this point to git-lfs for the reference, not special file from a directory:
+
+        // Get our main test folder path from our environment:
+        final String testFolderInputPath = getFuncotatorLargeDataValidationTestInputPath();
+
+        final File outputFile = getOutputFile(inputVcfName + ".funcotator", "vcf");
+
+        final ArgumentsBuilder arguments = createBaselineArgumentsForFuncotator(
+                inputVcfName,
+                outputFile,
+                testFolderInputPath + referencePath,
+                dataSourcesPath,
+                referenceVersion,
+                FuncotatorArgumentDefinitions.OutputFormatType.VCF,
+                true);
+
+        // Run the tool with our args:
+        long startTime = 0, endTime = 0;
+        startTime = System.nanoTime();
+        runCommandLine(arguments);
+        endTime = System.nanoTime();
+
+        System.out.println("  Elapsed Time: " + (endTime - startTime) / 1e9 + "s");
+
+        // ========================================================
+        // Validate our output:
+
+        // Get the actual data:
+        final Pair<VCFHeader, List<VariantContext>> actualVcfInfo = VariantContextTestUtils.readEntireVCFIntoMemory(outputFile.getAbsolutePath());
+        final List<VariantContext> actualVariantContexts = actualVcfInfo.getRight();
+        final VCFHeader actualVcfHeader = actualVcfInfo.getLeft();
+        final VCFInfoHeaderLine actualFuncotationHeaderLine = actualVcfHeader.getInfoHeaderLine(VcfOutputRenderer.FUNCOTATOR_VCF_FIELD_NAME);
+
+        // Get the expected data:
+        final Pair<VCFHeader, List<VariantContext>> expectedVcfInfo = VariantContextTestUtils.readEntireVCFIntoMemory(new File(expectedOutputPath).getAbsolutePath());
+        final List<VariantContext> expectedVariantContexts = expectedVcfInfo.getRight();
+        final VCFHeader expectedVcfHeader = expectedVcfInfo.getLeft();
+        final VCFInfoHeaderLine expectedFuncotationHeaderLine = expectedVcfHeader.getInfoHeaderLine(VcfOutputRenderer.FUNCOTATOR_VCF_FIELD_NAME);
+
+        // Check that they're equal:
+        Assert.assertEquals( actualFuncotationHeaderLine, expectedFuncotationHeaderLine );
+        VariantContextTestUtils.assertEqualVariants(actualVariantContexts, expectedVariantContexts);
+    }
 
     @Test(dataProvider = "provideForIntegrationTest")
     public void exhaustiveArgumentTest(final String dataSourcesPath,

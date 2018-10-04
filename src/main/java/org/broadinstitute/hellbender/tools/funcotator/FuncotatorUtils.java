@@ -1995,9 +1995,8 @@ public final class FuncotatorUtils {
         int proteinChangeStartIndex = (alignedCodingSequenceAlleleStart-1) / 3;
         final int maxProteinSequenceLength = Math.max(referenceProteinSequence.length(), alternateProteinSequence.length());
         for ( int i = 0; i < maxProteinSequenceLength; ++i ) {
-            if ( (i >= referenceProteinSequence.length()) ||
-                    (i >= referenceProteinSequence.length()) ||
-                    (referenceProteinSequence.charAt(i) != alternateProteinSequence.charAt(i)) ) {
+            if ( (i >= referenceProteinSequence.length()) || (i >= alternateProteinSequence.length()) ||
+                 (referenceProteinSequence.charAt(i) != alternateProteinSequence.charAt(i)) ) {
                 proteinChangeStartIndex = i;
                 break;
             }

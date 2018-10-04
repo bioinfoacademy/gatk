@@ -11,10 +11,7 @@ import org.broadinstitute.barclay.argparser.CommandLineProgramProperties;
 import org.broadinstitute.barclay.help.DocumentedFeature;
 import org.broadinstitute.hellbender.cmdline.StandardArgumentDefinitions;
 import org.broadinstitute.hellbender.engine.*;
-import org.broadinstitute.hellbender.engine.filters.VariantFilter;
 import org.broadinstitute.hellbender.engine.filters.CountingVariantFilter;
-import org.broadinstitute.hellbender.engine.filters.VariantFilterLibrary;
-import org.broadinstitute.hellbender.exceptions.GATKException;
 import org.broadinstitute.hellbender.exceptions.UserException;
 import org.broadinstitute.hellbender.tools.funcotator.dataSources.DataSourceUtils;
 import org.broadinstitute.hellbender.tools.funcotator.metadata.VcfFuncotationMetadata;
@@ -217,8 +214,6 @@ public class Funcotator extends VariantWalker {
 
     private FuncotatorEngine funcotatorEngine;
 
-    private boolean onlySawIGRs = true;
-
     //==================================================================================================================
 
     /**
@@ -347,7 +342,7 @@ public class Funcotator extends VariantWalker {
 
         // If we only saw IGRs, we most likely have a configuration issue.
         // Make sure the user knows this by making a HUGE stink about it.
-        if ( onlySawIGRs ) {
+        if ( funcotatorEngine.onlyProducedIGRs() ) {
             logger.warn("================================================================================");
             logger.warn("\u001B[43m     _  _  _   __        __               _                   _  _  _           ");
             logger.warn("    | || || |  \\ \\      / /_ _ _ __ _ __ (_)_ __   __ _      | || || |        ");

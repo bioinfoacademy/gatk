@@ -763,9 +763,9 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
     @DataProvider(name = "provideForMafVcfConcordance")
     final Object[][] provideForMafVcfConcordance() {
         return new Object[][]{
-                {PIK3CA_VCF_HG19_SNPS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_PIK3CA_DIR, true, 15},
-                {PIK3CA_VCF_HG19_INDELS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_PIK3CA_DIR, true, 57},
-                {MUC16_VCF_HG19, hg19Chr19Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_MUC16_DIR, false, 2057},
+//                {PIK3CA_VCF_HG19_SNPS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_PIK3CA_DIR, true, 15},
+//                {PIK3CA_VCF_HG19_INDELS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_PIK3CA_DIR, true, 57},
+//                {MUC16_VCF_HG19, hg19Chr19Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, Collections.singletonList("Gencode_19_proteinChange"), Collections.singletonList(MafOutputRendererConstants.FieldName_Protein_Change), DS_MUC16_DIR, false, 2057},
                 {
                         PIK3CA_VCF_HG38,
                         hg38Chr3Ref,
@@ -776,7 +776,7 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
                         false,
                         104,
                 },
-                {PIK3CA_VCF_HG19_INDELS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, VCF_FIELDS_GENCODE_19_DS, MAF_FIELDS_GENCODE_DS, DS_PIK3CA_DIR, true, 57},
+//                {PIK3CA_VCF_HG19_INDELS, b37Chr3Ref, FuncotatorTestConstants.REFERENCE_VERSION_HG19, VCF_FIELDS_GENCODE_19_DS, MAF_FIELDS_GENCODE_DS, DS_PIK3CA_DIR, true, 57},
         };
     }
 
@@ -920,8 +920,10 @@ public class FuncotatorIntegrationTest extends CommandLineProgramTest {
             // Don't try to refactor this for-loop to a stream here.
             final List<String> vcfFieldValues = new ArrayList<>();
             for (final VariantContext v: variantContexts) {
+
                 final Map<Allele, FuncotationMap> alleleFuncotationMapMap = FuncotatorUtils.createAlleleToFuncotationMapFromFuncotationVcfAttribute(
                         funcotationKeys, v, "Gencode_19_annotationTranscript", "TEST");
+
                 for (final Allele alternateAllele : v.getAlternateAlleles() ) {
                     final FuncotationMap funcotationMap = alleleFuncotationMapMap.get(alternateAllele);
                     vcfFieldValues.add(funcotationMap.getFieldValue(funcotationMap.getTranscriptList().get(0), annotationToCheckVcf, alternateAllele));
